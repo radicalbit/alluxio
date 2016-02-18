@@ -121,10 +121,9 @@ public final class TachyonWorker {
       }
 
       // Setup metrics collection system
-      mWorkerMetricsSystem = new MetricsSystem("worker", mTachyonConf);
       WorkerSource workerSource = WorkerContext.getWorkerSource();
       workerSource.registerGauges(mBlockWorker);
-      mWorkerMetricsSystem.registerSource(workerSource);
+      mWorkerMetricsSystem = new MetricsSystem("worker", mTachyonConf, workerSource);
 
       // Setup web server
       mWebServer =

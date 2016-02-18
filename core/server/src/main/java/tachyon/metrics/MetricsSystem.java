@@ -15,6 +15,10 @@
 
 package tachyon.metrics;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +27,13 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Metric;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +42,7 @@ import com.codahale.metrics.MetricRegistry;
 
 import tachyon.Constants;
 import tachyon.conf.TachyonConf;
+import tachyon.metrics.sink.CsvSink;
 import tachyon.metrics.sink.MetricsServlet;
 import tachyon.metrics.sink.Sink;
 import tachyon.metrics.source.Source;
@@ -52,8 +64,9 @@ public class MetricsSystem {
 
   private String mInstance;
   private List<Sink> mSinks = new ArrayList<Sink>();
+  private List<Source> mDefaultSources = new ArrayList<Source>();
   private List<Source> mSources = new ArrayList<Source>();
-  private MetricRegistry mMetricRegistry = new MetricRegistry();
+  private TachyonMetricRegistry mMetricRegistry = new TachyonMetricRegistry();
   private MetricsConfig mMetricsConfig;
   private boolean mRunning = false;
   private TachyonConf mTachyonConf;
@@ -98,13 +111,14 @@ public class MetricsSystem {
    *
    * @param instance the instance name
    * @param tachyonConf the {@link TachyonConf} instance for configuration properties
+   * @param defaultSources default sources to register
    */
-  public MetricsSystem(String instance, TachyonConf tachyonConf) {
+  public MetricsSystem(String instance, TachyonConf tachyonConf, Source... defaultSources) {
     mInstance = instance;
     mTachyonConf = tachyonConf;
-    String metricsConfFile = null;
-    metricsConfFile = mTachyonConf.get(Constants.METRICS_CONF_FILE);
+    String metricsConfFile = mTachyonConf.get(Constants.METRICS_CONF_FILE);
     mMetricsConfig = new MetricsConfig(metricsConfFile);
+    mDefaultSources = Arrays.asList(defaultSources);
   }
 
   /**
@@ -114,7 +128,7 @@ public class MetricsSystem {
    * @param metricsConfig the {@code MetricsConfig} object
    * @param tachyonConf the {@link TachyonConf} instance for configuration properties
    */
-  public MetricsSystem(String instance, MetricsConfig metricsConfig, TachyonConf tachyonConf) {
+  protected MetricsSystem(String instance, MetricsConfig metricsConfig, TachyonConf tachyonConf) {
     mInstance = instance;
     mMetricsConfig = metricsConfig;
     mTachyonConf = tachyonConf;
@@ -139,8 +153,37 @@ public class MetricsSystem {
    * @param source the source to register
    */
   public void registerSource(Source source) {
+    Preconditions.checkNotNull(mMetricRegistry);
+    Preconditions.checkState(mSinks.size() > 0);
     mSources.add(source);
     try {
+
+      if (mMetricRegistry.isHistoryEnabled()) {
+
+        CSVFormat csvFileFormat = CSVFormat.DEFAULT.withRecordSeparator("\n");
+
+        for (Map.Entry<String, Metric> entry : source.getMetricRegistry().getMetrics().entrySet()) {
+          try {
+            if (entry.getValue() instanceof Counter) {
+
+              String fileName = new StringBuilder().append(mMetricRegistry.getCsvPath()).append("/")
+                  .append(mInstance).append(".").append(entry.getKey()).append(".csv").toString();
+
+              CSVParser csvFileParser = new CSVParser(new FileReader(fileName), csvFileFormat);
+
+              CSVRecord currentRecord = Iterables.getLast(csvFileParser.getRecords());
+              LOG.debug("increasing metric " + entry.getKey() + " by " + currentRecord.get(1));
+              ((Counter) entry.getValue()).inc(Integer.parseInt(currentRecord.get(1)));
+            }
+          } catch (FileNotFoundException fnf) {
+            LOG.debug("Cannot find csv file for metric {} {}", entry.getKey(), fnf.getMessage());
+          } catch (IOException io) {
+            LOG.warn("Cannot read last value from csv for metric {} {}", entry.getKey(),
+                io.getMessage());
+          }
+        }
+      }
+
       mMetricRegistry.register(source.getName(), source.getMetricRegistry());
     } catch (IllegalArgumentException e) {
       LOG.warn("Metrics already registered. Exception: {}", e.getMessage());
@@ -148,9 +191,12 @@ public class MetricsSystem {
   }
 
   /**
-   * Registers all the sources configured in the metrics config.
+   * Registers default sources all the sources configured in the metrics config.
    */
   private void registerSources() {
+    for (Source source: mDefaultSources) {
+      registerSource(source);
+    }
     Properties instConfig = mMetricsConfig.getInstanceProperties(mInstance);
     Map<String, Properties> sourceConfigs = mMetricsConfig.subProperties(instConfig, SOURCE_REGEX);
     for (Map.Entry<String, Properties> entry : sourceConfigs.entrySet()) {
@@ -176,9 +222,18 @@ public class MetricsSystem {
       String classPath = entry.getValue().getProperty("class");
       if (classPath != null) {
         try {
+
+          Class<? extends Sink> clazz = Class.forName(classPath).asSubclass(Sink.class);
+
           Sink sink =
-              (Sink) Class.forName(classPath).getConstructor(Properties.class, MetricRegistry.class)
-                  .newInstance(entry.getValue(), mMetricRegistry);
+                  clazz.getConstructor(Properties.class, MetricRegistry.class)
+                          .newInstance(entry.getValue(), mMetricRegistry);
+
+          if (clazz.equals(CsvSink.class)) {
+            mMetricRegistry.setHistoryEnabled(true);
+            mMetricRegistry.setCsvPath(((CsvSink) sink).getPollDir());
+          }
+
           if (entry.getKey().equals("servlet")) {
             mMetricsServlet = (MetricsServlet) sink;
           } else {
@@ -215,8 +270,8 @@ public class MetricsSystem {
    */
   public void start() {
     if (!mRunning) {
-      registerSources();
       registerSinks();
+      registerSources();
       for (Sink sink : mSinks) {
         sink.start();
       }
@@ -243,7 +298,7 @@ public class MetricsSystem {
   /**
    * @return the metric registry
    */
-  public MetricRegistry getMetricRegistry() {
+  public TachyonMetricRegistry getMetricRegistry() {
     return mMetricRegistry;
   }
 }

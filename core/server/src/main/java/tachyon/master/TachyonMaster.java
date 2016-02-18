@@ -253,8 +253,8 @@ public class TachyonMaster {
       }
 
       MasterContext.getMasterSource().registerGauges(this);
-      mMasterMetricsSystem = new MetricsSystem("master", MasterContext.getConf());
-      mMasterMetricsSystem.registerSource(MasterContext.getMasterSource());
+      mMasterMetricsSystem =
+          new MetricsSystem("master", MasterContext.getConf(), MasterContext.getMasterSource());
     } catch (Exception e) {
       LOG.error(e.getMessage(), e);
       throw Throwables.propagate(e);
