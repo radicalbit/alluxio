@@ -488,6 +488,8 @@ public class AlluxioMaster {
       LOG.info("Journal directory doesn't provide storage: {}", journalDirectory);
       return true;
     }
+    connectToUFS();
+
     String[] files = ufs.list(journalDirectory);
     if (files == null) {
       return false;
