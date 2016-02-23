@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -301,24 +302,35 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
   }
 
   @Override
-  public String[] list(String path) throws IOException {
-    FileStatus[] files;
-    try {
-      files = mFileSystem.listStatus(new Path(path));
-    } catch (FileNotFoundException e) {
-      return null;
-    }
-    if (files != null && !isFile(path)) {
-      String[] rtn = new String[files.length];
-      int i = 0;
-      for (FileStatus status : files) {
-        // only return the relative path, to keep consistent with java.io.File.list()
-        rtn[i++] =  status.getPath().getName();
+  public String[] list(final String path) throws IOException {
+    LOG.warn("UserGroupInformation.getCurrentUser " + UserGroupInformation.getCurrentUser());
+    LOG.warn("UserGroupInformation.getLoginUser " + UserGroupInformation.getLoginUser());
+    return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<String[]>() {
+      @Override
+      public String[] run() throws Exception {
+
+        LOG.warn("UserGroupInformation.getCurrentUser INTERNAL " + UserGroupInformation.getCurrentUser());
+        LOG.warn("UserGroupInformation.getLoginUser INTERNAL " + UserGroupInformation.getLoginUser());
+
+        FileStatus[] files;
+        try {
+          files = mFileSystem.listStatus(new Path(path));
+        } catch (FileNotFoundException e) {
+          return null;
+        }
+        if (files != null && !isFile(path)) {
+          String[] rtn = new String[files.length];
+          int i = 0;
+          for (FileStatus status : files) {
+            // only return the relative path, to keep consistent with java.io.File.list()
+            rtn[i++] = status.getPath().getName();
+          }
+          return rtn;
+        } else {
+          return null;
+        }
       }
-      return rtn;
-    } else {
-      return null;
-    }
+    });
   }
 
   @Override
