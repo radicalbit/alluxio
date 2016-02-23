@@ -350,8 +350,8 @@ public class AlluxioMaster {
    * @throws Exception if starting the master fails
    */
   public void start() throws Exception {
-//    startMasters(true);
-//    startServing();
+    startMasters(true);
+    startServing();
   }
 
   /**
