@@ -354,7 +354,7 @@ public class AlluxioMaster {
 
   protected void startMasters(boolean isLeader) {
     try {
-//      connectToUFS();
+      connectToUFS();
 
       mBlockMaster.start(isLeader);
       mFileSystemMaster.start(isLeader);
