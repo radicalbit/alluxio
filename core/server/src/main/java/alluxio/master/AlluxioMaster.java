@@ -31,6 +31,8 @@ import alluxio.web.UIWebServer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import org.apache.hadoop.security.SecurityUtil;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.thrift.TMultiplexedProcessor;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -44,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -70,7 +73,23 @@ public class AlluxioMaster {
     }
 
     try {
-      Factory.create().start();
+      connectToUFS();
+
+        LOG.warn("UserGroupInformation.getCurrentUser " + UserGroupInformation.getCurrentUser());
+        LOG.warn("UserGroupInformation.getLoginUser " + UserGroupInformation.getLoginUser());
+        SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Void>() {
+            @Override
+            public Void run() throws Exception {
+
+                LOG.warn("UserGroupInformation.getCurrentUser INTERNAL " + UserGroupInformation.getCurrentUser());
+                LOG.warn("UserGroupInformation.getLoginUser INTERNAL " + UserGroupInformation.getLoginUser());
+
+                Factory.create().start();
+
+                return null;
+            }
+        });
+
     } catch (Exception e) {
       LOG.error("Uncaught exception terminating Master", e);
       System.exit(-1);
@@ -505,7 +524,7 @@ public class AlluxioMaster {
     return false;
   }
 
-  private void connectToUFS() throws IOException {
+  private static void connectToUFS() throws IOException {
     Configuration conf = MasterContext.getConf();
     String ufsAddress = conf.get(Constants.UNDERFS_ADDRESS);
     UnderFileSystem ufs = UnderFileSystem.get(ufsAddress, conf);

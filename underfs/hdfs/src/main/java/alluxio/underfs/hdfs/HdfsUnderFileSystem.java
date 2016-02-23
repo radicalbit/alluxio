@@ -306,14 +306,14 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public String[] list(final String path) throws IOException {
-    LOG.warn("UserGroupInformation.getCurrentUser " + UserGroupInformation.getCurrentUser());
-    LOG.warn("UserGroupInformation.getLoginUser " + UserGroupInformation.getLoginUser());
-    return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<String[]>() {
-      @Override
-      public String[] run() throws Exception {
-
-        LOG.warn("UserGroupInformation.getCurrentUser INTERNAL " + UserGroupInformation.getCurrentUser());
-        LOG.warn("UserGroupInformation.getLoginUser INTERNAL " + UserGroupInformation.getLoginUser());
+//    LOG.warn("UserGroupInformation.getCurrentUser " + UserGroupInformation.getCurrentUser());
+//    LOG.warn("UserGroupInformation.getLoginUser " + UserGroupInformation.getLoginUser());
+//    return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<String[]>() {
+//      @Override
+//      public String[] run() throws Exception {
+//
+//        LOG.warn("UserGroupInformation.getCurrentUser INTERNAL " + UserGroupInformation.getCurrentUser());
+//        LOG.warn("UserGroupInformation.getLoginUser INTERNAL " + UserGroupInformation.getLoginUser());
 
         FileStatus[] files;
         try {
@@ -338,8 +338,8 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
         } else {
           return null;
         }
-      }
-    });
+//      }
+//    });
   }
 
   @Override
