@@ -331,8 +331,8 @@ public class AlluxioMaster {
    * @throws Exception if starting the master fails
    */
   public void start() throws Exception {
-    startMasters(true);
-    startServing();
+//    startMasters(true);
+//    startServing();
   }
 
   /**
@@ -354,7 +354,7 @@ public class AlluxioMaster {
 
   protected void startMasters(boolean isLeader) {
     try {
-//      connectToUFS();
+      connectToUFS();
 
       mBlockMaster.start(isLeader);
       mFileSystemMaster.start(isLeader);
@@ -491,6 +491,7 @@ public class AlluxioMaster {
     connectToUFS();
 
     String[] files = ufs.list(journalDirectory);
+    LOG.warn("######### => HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
     if (files == null) {
       return false;
     }
