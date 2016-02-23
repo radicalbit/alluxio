@@ -28,12 +28,15 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.security.SecurityUtil;
+import org.apache.hadoop.security.User;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,6 +44,7 @@ import java.util.List;
 import java.util.Stack;
 
 import javax.annotation.concurrent.ThreadSafe;
+import javax.security.auth.Subject;
 
 /**
  * HDFS {@link UnderFileSystem} implementation.
@@ -314,6 +318,12 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
         FileStatus[] files;
         try {
+
+          AccessControlContext context = AccessController.getContext();
+          LOG.warn("##### ==> context " + context);
+          Subject subject = Subject.getSubject(context);
+          LOG.warn("##### ==> subject " + subject);
+
           files = mFileSystem.listStatus(new Path(path));
         } catch (FileNotFoundException e) {
           return null;
