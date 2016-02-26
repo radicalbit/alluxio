@@ -19,6 +19,7 @@ import alluxio.master.AlluxioMaster;
 import alluxio.master.MasterContext;
 import alluxio.underfs.UnderFileSystem;
 import alluxio.util.FormatUtils;
+import alluxio.util.network.NetworkAddressUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -197,7 +198,7 @@ public final class WebInterfaceGeneralServlet extends HttpServlet {
     Configuration conf = new Configuration();
     String ufsRoot = conf.get(Constants.UNDERFS_ADDRESS);
     UnderFileSystem ufs = UnderFileSystem.get(ufsRoot, conf);
-    AlluxioMaster.connectToUFS();
+    ufs.connectFromMaster(conf, NetworkAddressUtils.getConnectHost(NetworkAddressUtils.ServiceType.MASTER_WEB, conf));
 
     long sizeBytes = ufs.getSpace(ufsRoot, UnderFileSystem.SpaceType.SPACE_TOTAL);
     if (sizeBytes >= 0) {
