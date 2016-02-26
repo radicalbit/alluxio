@@ -20,6 +20,9 @@ import alluxio.master.MasterContext;
 import alluxio.underfs.UnderFileSystem;
 import alluxio.util.FormatUtils;
 import alluxio.util.network.NetworkAddressUtils;
+import org.mortbay.log.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,6 +40,9 @@ import javax.servlet.http.HttpServletResponse;
  */
 @ThreadSafe
 public final class WebInterfaceGeneralServlet extends HttpServlet {
+
+  private static final Logger LOG = LoggerFactory.getLogger(Constants.LOGGER_TYPE);
+
   /**
    * Class to make referencing tiered storage information more intuitive.
    */
@@ -195,9 +201,15 @@ public final class WebInterfaceGeneralServlet extends HttpServlet {
                 - mMaster.getBlockMaster().getUsedBytes()));
 
     // TODO(jiri): Should we use MasterContext here instead?
-    Configuration conf = new Configuration();
+    Configuration conf = MasterContext.getConf();
     String ufsRoot = conf.get(Constants.UNDERFS_ADDRESS);
     UnderFileSystem ufs = UnderFileSystem.get(ufsRoot, conf);
+
+    String masterKeytab = conf.get(Constants.MASTER_KEYTAB_KEY);
+    String masterPrincipal = conf.get(Constants.MASTER_PRINCIPAL_KEY);
+    LOG.warn("masterKeytab " + masterKeytab);
+    LOG.warn("masterPrincipal " + masterPrincipal);
+
     ufs.connectFromMaster(conf, NetworkAddressUtils.getConnectHost(NetworkAddressUtils.ServiceType.MASTER_WEB, conf));
 
     long sizeBytes = ufs.getSpace(ufsRoot, UnderFileSystem.SpaceType.SPACE_TOTAL);
