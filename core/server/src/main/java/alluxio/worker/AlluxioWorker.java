@@ -16,6 +16,7 @@ import alluxio.Constants;
 import alluxio.Version;
 import alluxio.metrics.MetricsSystem;
 import alluxio.security.authentication.AuthenticationUtils;
+import alluxio.underfs.UnderFileSystem;
 import alluxio.util.network.NetworkAddressUtils;
 import alluxio.util.network.NetworkAddressUtils.ServiceType;
 import alluxio.web.UIWebServer;
@@ -234,6 +235,7 @@ public final class AlluxioWorker {
    * @throws Exception if the workers fail to start
    */
   public void start() throws Exception {
+    connectToUFS();
     // NOTE: the order to start different services is sensitive. If you change it, do it cautiously.
 
     // Start serving metrics system, this will not block
@@ -384,5 +386,12 @@ public final class AlluxioWorker {
       LOG.info("Usage: java AlluxioWorker");
       System.exit(-1);
     }
+  }
+
+  private static void connectToUFS() throws IOException {
+    Configuration conf = WorkerContext.getConf();
+    String ufsAddress = conf.get(Constants.UNDERFS_ADDRESS);
+    UnderFileSystem ufs = UnderFileSystem.get(ufsAddress, conf);
+    ufs.connectFromMaster(conf, NetworkAddressUtils.getConnectHost(ServiceType.WORKER_RPC, conf));
   }
 }
