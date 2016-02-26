@@ -73,23 +73,7 @@ public class AlluxioMaster {
     }
 
     try {
-      connectToUFS();
-
-        LOG.warn("UserGroupInformation.getCurrentUser " + UserGroupInformation.getCurrentUser());
-        LOG.warn("UserGroupInformation.getLoginUser " + UserGroupInformation.getLoginUser());
-        SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-
-                LOG.warn("UserGroupInformation.getCurrentUser INTERNAL " + UserGroupInformation.getCurrentUser());
-                LOG.warn("UserGroupInformation.getLoginUser INTERNAL " + UserGroupInformation.getLoginUser());
-
-                Factory.create().start();
-
-                return null;
-            }
-        });
-
+      Factory.create().start();
     } catch (Exception e) {
       LOG.error("Uncaught exception terminating Master", e);
       System.exit(-1);
@@ -241,6 +225,11 @@ public class AlluxioMaster {
       if (!journalDirectory.endsWith(AlluxioURI.SEPARATOR)) {
         journalDirectory += AlluxioURI.SEPARATOR;
       }
+
+      connectToUFS();
+      LOG.warn("UserGroupInformation.getCurrentUser " + UserGroupInformation.getCurrentUser());
+      LOG.warn("UserGroupInformation.getLoginUser " + UserGroupInformation.getLoginUser());
+
       Preconditions.checkState(isJournalFormatted(journalDirectory),
           "Alluxio was not formatted! The journal folder is " + journalDirectory);
 
