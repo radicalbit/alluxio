@@ -513,7 +513,7 @@ public class AlluxioMaster {
     return false;
   }
 
-  private static void connectToUFS() throws IOException {
+  public static void connectToUFS() throws IOException {
     Configuration conf = MasterContext.getConf();
     String ufsAddress = conf.get(Constants.UNDERFS_ADDRESS);
     UnderFileSystem ufs = UnderFileSystem.get(ufsAddress, conf);

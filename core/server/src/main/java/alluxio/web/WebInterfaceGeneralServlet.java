@@ -197,6 +197,7 @@ public final class WebInterfaceGeneralServlet extends HttpServlet {
     Configuration conf = new Configuration();
     String ufsRoot = conf.get(Constants.UNDERFS_ADDRESS);
     UnderFileSystem ufs = UnderFileSystem.get(ufsRoot, conf);
+    AlluxioMaster.connectToUFS();
 
     long sizeBytes = ufs.getSpace(ufsRoot, UnderFileSystem.SpaceType.SPACE_TOTAL);
     if (sizeBytes >= 0) {
