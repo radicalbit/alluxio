@@ -397,11 +397,11 @@ public class AlluxioMaster {
     }
   }
 
-  private void startServing() {
+  private void startServing() throws IOException {
     startServing("", "");
   }
 
-  protected void startServing(String startMessage, String stopMessage) {
+  protected void startServing(String startMessage, String stopMessage) throws IOException {
     mMasterMetricsSystem.start();
     startServingWebServer();
     LOG.info("Alluxio Master version {} started @ {} {}", Version.VERSION, mMasterAddress,
@@ -411,16 +411,24 @@ public class AlluxioMaster {
         stopMessage);
   }
 
-  protected void startServingWebServer() {
-    Configuration conf = MasterContext.getConf();
-    mWebServer =
-        new MasterUIWebServer(ServiceType.MASTER_WEB, NetworkAddressUtils.getBindAddress(
-            ServiceType.MASTER_WEB, conf), this, conf);
+  protected void startServingWebServer() throws IOException {
 
-    // Add the metrics servlet to the web server, this must be done after the metrics system starts
-    mWebServer.addHandler(mMasterMetricsSystem.getServletHandler());
-    // start web ui
-    mWebServer.startWebServer();
+    SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Void>() {
+      @Override
+      public Void run() throws Exception {
+
+        Configuration conf = MasterContext.getConf();
+        AlluxioMaster.this.mWebServer =
+                new MasterUIWebServer(ServiceType.MASTER_WEB, NetworkAddressUtils.getBindAddress(
+                        ServiceType.MASTER_WEB, conf), AlluxioMaster.this, conf);
+
+        // Add the metrics servlet to the web server, this must be done after the metrics system starts
+        mWebServer.addHandler(mMasterMetricsSystem.getServletHandler());
+        // start web ui
+        mWebServer.startWebServer();
+        return null;
+      }
+    });
   }
 
   private void registerServices(TMultiplexedProcessor processor, Map<String, TProcessor> services) {

@@ -220,6 +220,11 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
     return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Boolean>() {
       @Override
       public Boolean run() throws Exception {
+
+        LOG.warn("UserGroupInformation.getCurrentUser " + UserGroupInformation.getCurrentUser());
+        LOG.warn("UserGroupInformation.getLoginUser " + UserGroupInformation.getLoginUser());
+
+
         IOException te = null;
         RetryPolicy retryPolicy = new CountingRetry(MAX_TRY);
         while (retryPolicy.attemptRetry()) {
