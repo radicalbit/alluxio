@@ -61,6 +61,8 @@ public class AlluxioShell implements Closeable {
    */
   public static void main(String[] argv) throws IOException {
     AlluxioShell shell = new AlluxioShell(new Configuration());
+    System.out.println(shell.mConfiguration.get(Constants.MASTER_KEYTAB_KEY));
+    System.out.println(shell.mConfiguration.get(Constants.MASTER_PRINCIPAL_KEY));
     int ret;
     try {
       ret = shell.run(argv);
