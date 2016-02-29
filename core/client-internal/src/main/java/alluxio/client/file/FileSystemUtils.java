@@ -154,6 +154,10 @@ public final class FileSystemUtils {
     Closer closer = Closer.create();
     long ret;
     try {
+
+      System.out.println("UserGroupInformation.getCurrentUser BEFORE" + UserGroupInformation.getCurrentUser());
+      System.out.println("UserGroupInformation.getLoginUser BEFORE" + UserGroupInformation.getLoginUser());
+
       OpenFileOptions options = OpenFileOptions.defaults().setReadType(ReadType.NO_CACHE);
       FileInStream in = closer.register(fs.openFile(uri, options));
       AlluxioURI dstPath = new AlluxioURI(status.getUfsPath());
@@ -192,6 +196,9 @@ public final class FileSystemUtils {
 //    SecurityUtil.login(conf, keytabFileKey, principalKey, hostname);
       UserGroupInformation.loginUserFromKeytab(masterPrincipal, masterKeytab);
 
+
+      System.out.println("UserGroupInformation.getCurrentUser AFTER" + UserGroupInformation.getCurrentUser());
+      System.out.println("UserGroupInformation.getLoginUser AFTER" + UserGroupInformation.getLoginUser());
 
       String parentPath = dstPath.getParent().toString();
       if (!ufs.exists(parentPath) && !ufs.mkdirs(parentPath, true)) {
