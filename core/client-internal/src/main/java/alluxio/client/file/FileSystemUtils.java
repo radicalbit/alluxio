@@ -26,6 +26,7 @@ import alluxio.util.CommonUtils;
 
 import com.google.common.io.Closer;
 import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -157,6 +158,41 @@ public final class FileSystemUtils {
       FileInStream in = closer.register(fs.openFile(uri, options));
       AlluxioURI dstPath = new AlluxioURI(status.getUfsPath());
       UnderFileSystem ufs = UnderFileSystem.get(dstPath.toString(), conf);
+
+
+      String masterKeytab = conf.get(Constants.MASTER_KEYTAB_KEY);
+      String masterPrincipal = conf.get(Constants.MASTER_PRINCIPAL_KEY);
+
+//      login(Constants.MASTER_KEYTAB_KEY, masterKeytab, Constants.MASTER_PRINCIPAL_KEY,
+//              masterPrincipal, host);
+      org.apache.hadoop.conf.Configuration hConf = new org.apache.hadoop.conf.Configuration();
+      hConf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+      hConf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
+      hConf.set("hadoop.security.authentication", "KERBEROS");
+      hConf.set(Constants.MASTER_KEYTAB_KEY, masterKeytab);
+      hConf.set(Constants.MASTER_PRINCIPAL_KEY, masterPrincipal);
+      LOG.info(" ##### ======> hadoop conf = {}", conf);
+
+      LOG.info(" ##### ======> keytabFileKey = {}", masterKeytab);
+      LOG.info(" ##### ======> principalKey = {}", masterPrincipal);
+
+//    System.setProperty("java.security.krb5.conf", keytabFile);
+//    System.setProperty("java.security.auth.login.config", "/tmp/krb5Login-hadoop.conf");
+
+//    try {
+//      LoginContext lc = new LoginContext("SampleClient", new TextCallbackHandler());
+//      lc.login();
+//      UserGroupInformation.setConfiguration(conf);
+//      UserGroupInformation.loginUserFromSubject(lc.getSubject());
+//    } catch (LoginException e) {
+//      throw new IOException(e);
+//    }
+
+      UserGroupInformation.setConfiguration(hConf);
+//    SecurityUtil.login(conf, keytabFileKey, principalKey, hostname);
+      UserGroupInformation.loginUserFromKeytab(masterPrincipal, masterKeytab);
+
+
       String parentPath = dstPath.getParent().toString();
       if (!ufs.exists(parentPath) && !ufs.mkdirs(parentPath, true)) {
         throw new IOException("Failed to create " + parentPath);
