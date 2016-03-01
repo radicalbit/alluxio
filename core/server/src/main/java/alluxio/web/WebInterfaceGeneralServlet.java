@@ -20,12 +20,15 @@ import alluxio.master.MasterContext;
 import alluxio.underfs.UnderFileSystem;
 import alluxio.util.FormatUtils;
 import alluxio.util.network.NetworkAddressUtils;
+import org.apache.hadoop.security.SecurityUtil;
 import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -201,8 +204,8 @@ public final class WebInterfaceGeneralServlet extends HttpServlet {
                 - mMaster.getBlockMaster().getUsedBytes()));
 
     Configuration conf = MasterContext.getConf();
-    String ufsRoot = conf.get(Constants.UNDERFS_ADDRESS);
-    UnderFileSystem ufs = UnderFileSystem.get(ufsRoot, conf);
+    final String ufsRoot = conf.get(Constants.UNDERFS_ADDRESS);
+    final UnderFileSystem ufs = UnderFileSystem.get(ufsRoot, conf);
 
     String masterKeytab = conf.get(Constants.MASTER_KEYTAB_KEY);
     String masterPrincipal = conf.get(Constants.MASTER_PRINCIPAL_KEY);
@@ -211,28 +214,43 @@ public final class WebInterfaceGeneralServlet extends HttpServlet {
 
     ufs.connectFromMaster(conf, NetworkAddressUtils.getConnectHost(NetworkAddressUtils.ServiceType.MASTER_WEB, conf));
 
-    long sizeBytes = ufs.getSpace(ufsRoot, UnderFileSystem.SpaceType.SPACE_TOTAL);
-    if (sizeBytes >= 0) {
-      request.setAttribute("diskCapacity", FormatUtils.getSizeFromBytes(sizeBytes));
-    } else {
-      request.setAttribute("diskCapacity", "UNKNOWN");
+    Map<String,Object> ufsMap;
+
+    ufsMap = SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Map<String,Object>>() {
+      @Override
+      public Map<String,Object> run() throws Exception {
+
+        Map<String,Object> ret = new HashMap<String, Object>();
+
+        long sizeBytes = ufs.getSpace(ufsRoot, UnderFileSystem.SpaceType.SPACE_TOTAL);
+        if (sizeBytes >= 0) {
+          ret.put("diskCapacity", FormatUtils.getSizeFromBytes(sizeBytes));
+        } else {
+          ret.put("diskCapacity", "UNKNOWN");
+        }
+
+        sizeBytes = ufs.getSpace(ufsRoot, UnderFileSystem.SpaceType.SPACE_USED);
+        if (sizeBytes >= 0) {
+          ret.put("diskUsedCapacity", FormatUtils.getSizeFromBytes(sizeBytes));
+        } else {
+          ret.put("diskUsedCapacity", "UNKNOWN");
+        }
+
+        sizeBytes = ufs.getSpace(ufsRoot, UnderFileSystem.SpaceType.SPACE_FREE);
+        if (sizeBytes >= 0) {
+          ret.put("diskFreeCapacity", FormatUtils.getSizeFromBytes(sizeBytes));
+        } else {
+          ret.put("diskFreeCapacity", "UNKNOWN");
+        }
+
+        StorageTierInfo[] infos = generateOrderedStorageTierInfo();
+        ret.put("storageTierInfos", infos);
+        return ret;
+      }});
+
+    for (Map.Entry<String,Object> entry : ufsMap.entrySet()) {
+      request.setAttribute(entry.getKey(),entry.getValue());
     }
 
-    sizeBytes = ufs.getSpace(ufsRoot, UnderFileSystem.SpaceType.SPACE_USED);
-    if (sizeBytes >= 0) {
-      request.setAttribute("diskUsedCapacity", FormatUtils.getSizeFromBytes(sizeBytes));
-    } else {
-      request.setAttribute("diskUsedCapacity", "UNKNOWN");
-    }
-
-    sizeBytes = ufs.getSpace(ufsRoot, UnderFileSystem.SpaceType.SPACE_FREE);
-    if (sizeBytes >= 0) {
-      request.setAttribute("diskFreeCapacity", FormatUtils.getSizeFromBytes(sizeBytes));
-    } else {
-      request.setAttribute("diskFreeCapacity", "UNKNOWN");
-    }
-
-    StorageTierInfo[] infos = generateOrderedStorageTierInfo();
-    request.setAttribute("storageTierInfos", infos);
   }
 }
