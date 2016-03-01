@@ -26,12 +26,14 @@ import alluxio.util.CommonUtils;
 
 import com.google.common.io.Closer;
 import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.security.PrivilegedExceptionAction;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -148,20 +150,16 @@ public final class FileSystemUtils {
    * @throws FileDoesNotExistException if the given file does not exist
    * @throws AlluxioException if an unexpected Alluxio error occurs
    */
-  public static long persistFile(FileSystem fs, AlluxioURI uri, URIStatus status,
-      Configuration conf) throws IOException, FileDoesNotExistException, AlluxioException {
+  public static long persistFile(final FileSystem fs, final AlluxioURI uri, final URIStatus status,
+      final Configuration conf) throws IOException, FileDoesNotExistException, AlluxioException {
     // TODO(manugoyal) move this logic to the worker, as it deals with the under file system
-    Closer closer = Closer.create();
+
     long ret;
-    try {
 
       System.out.println("UserGroupInformation.getCurrentUser BEFORE" + UserGroupInformation.getCurrentUser());
       System.out.println("UserGroupInformation.getLoginUser BEFORE" + UserGroupInformation.getLoginUser());
 
-      OpenFileOptions options = OpenFileOptions.defaults().setReadType(ReadType.NO_CACHE);
-      FileInStream in = closer.register(fs.openFile(uri, options));
-      AlluxioURI dstPath = new AlluxioURI(status.getUfsPath());
-      UnderFileSystem ufs = UnderFileSystem.get(dstPath.toString(), conf);
+
 
 
       String masterKeytab = conf.get(Constants.MASTER_KEYTAB_KEY);
@@ -200,17 +198,35 @@ public final class FileSystemUtils {
       System.out.println("UserGroupInformation.getCurrentUser AFTER" + UserGroupInformation.getCurrentUser());
       System.out.println("UserGroupInformation.getLoginUser AFTER" + UserGroupInformation.getLoginUser());
 
-      String parentPath = dstPath.getParent().toString();
-      if (!ufs.exists(parentPath) && !ufs.mkdirs(parentPath, true)) {
-        throw new IOException("Failed to create " + parentPath);
-      }
-      OutputStream out = closer.register(ufs.create(dstPath.getPath()));
-      ret = IOUtils.copyLarge(in, out);
-    } catch (Exception e) {
-      throw closer.rethrow(e);
-    } finally {
-      closer.close();
-    }
+
+      ret = SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Long>() {
+        @Override
+        public Long run() throws Exception {
+
+          Closer closer = Closer.create();
+
+          OpenFileOptions options = OpenFileOptions.defaults().setReadType(ReadType.NO_CACHE);
+          FileInStream in = closer.register(fs.openFile(uri, options));
+          AlluxioURI dstPath = new AlluxioURI(status.getUfsPath());
+          UnderFileSystem ufs = UnderFileSystem.get(dstPath.toString(), conf);
+
+          try {
+
+          String parentPath = dstPath.getParent().toString();
+          if (!ufs.exists(parentPath) && !ufs.mkdirs(parentPath, true)) {
+            throw new IOException("Failed to create " + parentPath);
+          }
+          OutputStream out = closer.register(ufs.create(dstPath.getPath()));
+          return  IOUtils.copyLarge(in, out);
+          } catch (Exception e) {
+            throw closer.rethrow(e);
+          } finally {
+            closer.close();
+          }
+
+        }
+      });
+
     // Tell the master to mark the file as persisted
     fs.setAttribute(uri, SetAttributeOptions.defaults().setPersisted(true));
     return ret;
