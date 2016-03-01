@@ -15,11 +15,13 @@ import alluxio.Configuration;
 import alluxio.underfs.UnderFileSystem;
 import alluxio.underfs.UnderFileSystemFactory;
 
+import alluxio.util.network.NetworkAddressUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import java.io.IOException;
 import java.util.Map;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -39,7 +41,7 @@ public final class HdfsUnderFileSystemFactory implements UnderFileSystemFactory 
   private Map<Path, HdfsUnderFileSystem> mHdfsUfsCache = Maps.newHashMap();
 
   @Override
-  public UnderFileSystem create(String path, Configuration configuration, Object conf) {
+  public UnderFileSystem create(String path, Configuration configuration, Object conf) throws IOException {
     Preconditions.checkArgument(path != null, "path may not be null");
 
     // Normalize the path to just its root. This is all that's needed to identify which FileSystem
@@ -47,7 +49,9 @@ public final class HdfsUnderFileSystemFactory implements UnderFileSystemFactory 
     Path rootPath = getRoot(new Path(path));
     synchronized (mHdfsUfsCache) {
       if (!mHdfsUfsCache.containsKey(rootPath)) {
-        mHdfsUfsCache.put(rootPath, new HdfsUnderFileSystem(path, configuration, conf));
+        HdfsUnderFileSystem hufs = new HdfsUnderFileSystem(path, configuration, conf);
+        hufs.connectFromMaster(configuration, NetworkAddressUtils.getConnectHost(NetworkAddressUtils.ServiceType.MASTER_RPC, configuration));
+        mHdfsUfsCache.put(rootPath, hufs);
       }
       return mHdfsUfsCache.get(rootPath);
     }

@@ -13,6 +13,8 @@ package alluxio.underfs;
 
 import alluxio.Configuration;
 
+import java.io.IOException;
+
 /**
  * Interface for under file system factories.
  */
@@ -28,7 +30,7 @@ public interface UnderFileSystemFactory {
    * @param ufsConf Optional configuration object for the UFS, may be null
    * @return the client
    */
-  UnderFileSystem create(String path, Configuration configuration, Object ufsConf);
+  UnderFileSystem create(String path, Configuration configuration, Object ufsConf) throws IOException;
 
   /**
    * Gets whether this factory supports the given path and thus whether calling the
