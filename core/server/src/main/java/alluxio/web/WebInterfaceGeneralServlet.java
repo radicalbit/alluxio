@@ -248,8 +248,8 @@ public final class WebInterfaceGeneralServlet extends HttpServlet {
     UserGroupInformation.loginUserFromKeytab(masterPrincipal, masterKeytab);
 
 
-    System.out.println("UserGroupInformation.getCurrentUser AFTER" + UserGroupInformation.getCurrentUser());
-    System.out.println("UserGroupInformation.getLoginUser AFTER" + UserGroupInformation.getLoginUser());
+    LOG.warn("UserGroupInformation.getCurrentUser AFTER" + UserGroupInformation.getCurrentUser());
+    LOG.warn("UserGroupInformation.getLoginUser AFTER" + UserGroupInformation.getLoginUser());
 
     Map<String,Object> ufsMap;
 

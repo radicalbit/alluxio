@@ -133,11 +133,10 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public FSDataOutputStream create(final String path) throws IOException {
+    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<FSDataOutputStream>() {
 
-    return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<FSDataOutputStream>() {
       @Override
-      public FSDataOutputStream run() throws Exception {
-
+      public FSDataOutputStream run() throws IOException {
         IOException te = null;
         RetryPolicy retryPolicy = new CountingRetry(MAX_TRY);
         while (retryPolicy.attemptRetry()) {
@@ -151,7 +150,6 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
         }
         throw te;
       }
-
     });
   }
 
@@ -196,9 +194,10 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public boolean delete(final String path, final boolean recursive) throws IOException {
-    return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Boolean>() {
+    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Boolean>() {
+
       @Override
-      public Boolean run() throws Exception {
+      public Boolean run() throws IOException {
         LOG.debug("deleting {} {}", path, recursive);
         IOException te = null;
         RetryPolicy retryPolicy = new CountingRetry(MAX_TRY);
@@ -217,9 +216,10 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public boolean exists(final String path) throws IOException {
-    return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Boolean>() {
+    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Boolean>() {
+
       @Override
-      public Boolean run() throws Exception {
+      public Boolean run() throws IOException {
 
         LOG.warn("UserGroupInformation.getCurrentUser " + UserGroupInformation.getCurrentUser());
         LOG.warn("UserGroupInformation.getLoginUser " + UserGroupInformation.getLoginUser());
@@ -243,9 +243,10 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public long getBlockSizeByte(final String path) throws IOException {
-    return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Long>() {
+    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Long>() {
+
       @Override
-      public Long run() throws Exception {
+      public Long run() throws IOException {
         Path tPath = new Path(path);
         if (!mFileSystem.exists(tPath)) {
           throw new FileNotFoundException(path);
@@ -268,9 +269,10 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public List<String> getFileLocations(final String path, final long offset) throws IOException {
-    return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<List<String>>() {
+    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<List<String>>() {
+
       @Override
-      public List<String> run() throws Exception {
+      public List<String> run() throws IOException {
         List<String> ret = new ArrayList<String>();
         try {
           FileStatus fStatus = mFileSystem.getFileStatus(new Path(path));
@@ -289,9 +291,10 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public long getFileSize(final String path) throws IOException {
-    return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Long>() {
+    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Long>() {
+
       @Override
-      public Long run() throws Exception {
+      public Long run() throws IOException {
         Path tPath = new Path(path);
         RetryPolicy retryPolicy = new CountingRetry(MAX_TRY);
         while (retryPolicy.attemptRetry()) {
@@ -310,9 +313,10 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public long getModificationTimeMs(final String path) throws IOException {
-    return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Long>() {
+    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Long>() {
+
       @Override
-      public Long run() throws Exception {
+      public Long run() throws IOException {
         Path tPath = new Path(path);
         if (!mFileSystem.exists(tPath)) {
           throw new FileNotFoundException(path);
@@ -327,9 +331,10 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
   public long getSpace(final String path, final SpaceType type) throws IOException {
     // Ignoring the path given, will give information for entire cluster
     // as Alluxio can load/store data out of entire HDFS cluster
-    return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Long>() {
+    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Long>() {
+
       @Override
-      public Long run() throws Exception {
+      public Long run() throws IOException {
         if (mFileSystem instanceof DistributedFileSystem) {
           switch (type) {
             case SPACE_TOTAL:
@@ -349,9 +354,10 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public boolean isFile(final String path) throws IOException {
-    return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Boolean>() {
+    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Boolean>() {
+
       @Override
-      public Boolean run() throws Exception {
+      public Boolean run() throws IOException {
         return mFileSystem.isFile(new Path(path));
       }
     });
@@ -361,9 +367,10 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
   public String[] list(final String path) throws IOException {
     LOG.warn("UserGroupInformation.getCurrentUser " + UserGroupInformation.getCurrentUser());
     LOG.warn("UserGroupInformation.getLoginUser " + UserGroupInformation.getLoginUser());
-    return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<String[]>() {
+    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<String[]>() {
+
       @Override
-      public String[] run() throws Exception {
+      public String[] run() throws IOException {
 
         LOG.warn("UserGroupInformation.getCurrentUser INTERNAL " + UserGroupInformation.getCurrentUser());
         LOG.warn("UserGroupInformation.getLoginUser INTERNAL " + UserGroupInformation.getLoginUser());
@@ -462,9 +469,10 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public boolean mkdirs(final String path, final boolean createParent) throws IOException {
-    return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Boolean>() {
+    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Boolean>() {
+
       @Override
-      public Boolean run() throws Exception {
+      public Boolean run() throws IOException {
         IOException te = null;
         RetryPolicy retryPolicy = new CountingRetry(MAX_TRY);
         while (retryPolicy.attemptRetry()) {
@@ -502,9 +510,10 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public FSDataInputStream open(final String path) throws IOException {
-    return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<FSDataInputStream>() {
+    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<FSDataInputStream>() {
+
       @Override
-      public FSDataInputStream run() throws Exception {
+      public FSDataInputStream run() throws IOException {
         IOException te = null;
         RetryPolicy retryPolicy = new CountingRetry(MAX_TRY);
         while (retryPolicy.attemptRetry()) {
@@ -522,9 +531,10 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public boolean rename(final String src, final String dst) throws IOException {
-    return SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Boolean>() {
+    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Boolean>() {
+
       @Override
-      public Boolean run() throws Exception {
+      public Boolean run() throws IOException {
         LOG.debug("Renaming from {} to {}", src, dst);
         if (!exists(src)) {
           LOG.error("File {} does not exist. Therefore rename to {} failed.", src, dst);
@@ -559,9 +569,10 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public void setPermission(final String path, final String posixPerm) throws IOException {
-    SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Void>() {
+    HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Void>() {
+
       @Override
-      public Void run() throws Exception {
+      public Void run() throws IOException {
         try {
           FileStatus fileStatus = mFileSystem.getFileStatus(new Path(path));
           LOG.info("Changing file '{}' permissions from: {} to {}", fileStatus.getPath(),
