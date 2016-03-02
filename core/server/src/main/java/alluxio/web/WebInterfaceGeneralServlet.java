@@ -226,7 +226,7 @@ public final class WebInterfaceGeneralServlet extends HttpServlet {
     hConf.set("hadoop.security.authentication", "KERBEROS");
     hConf.set(Constants.MASTER_KEYTAB_KEY, masterKeytab);
     hConf.set(Constants.MASTER_PRINCIPAL_KEY, masterPrincipal);
-    LOG.info(" ##### ======> hadoop conf = {}", conf);
+    LOG.info(" ##### ======> hadoop conf = {}", hConf);
 
     LOG.info(" ##### ======> keytabFileKey = {}", masterKeytab);
     LOG.info(" ##### ======> principalKey = {}", masterPrincipal);
