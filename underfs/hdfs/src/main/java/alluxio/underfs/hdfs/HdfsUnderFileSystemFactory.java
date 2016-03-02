@@ -49,9 +49,7 @@ public final class HdfsUnderFileSystemFactory implements UnderFileSystemFactory 
     Path rootPath = getRoot(new Path(path));
     synchronized (mHdfsUfsCache) {
       if (!mHdfsUfsCache.containsKey(rootPath)) {
-        HdfsUnderFileSystem hufs = new HdfsUnderFileSystem(path, configuration, conf);
-        hufs.connectFromMaster(configuration, NetworkAddressUtils.getConnectHost(NetworkAddressUtils.ServiceType.MASTER_RPC, configuration));
-        mHdfsUfsCache.put(rootPath, hufs);
+        mHdfsUfsCache.put(rootPath, new HdfsUnderFileSystem(path, configuration, conf));
       }
       return mHdfsUfsCache.get(rootPath);
     }
