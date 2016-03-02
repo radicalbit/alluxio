@@ -16,7 +16,6 @@ import alluxio.Constants;
 import alluxio.Version;
 import alluxio.metrics.MetricsSystem;
 import alluxio.security.authentication.AuthenticationUtils;
-import alluxio.underfs.UnderFileSystem;
 import alluxio.util.network.NetworkAddressUtils;
 import alluxio.util.network.NetworkAddressUtils.ServiceType;
 import alluxio.web.UIWebServer;
@@ -28,7 +27,6 @@ import alluxio.worker.file.FileSystemWorker;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import org.apache.hadoop.security.SecurityUtil;
 import org.apache.thrift.TMultiplexedProcessor;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -41,7 +39,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -154,32 +151,22 @@ public final class AlluxioWorker {
    *
    * @param args command line arguments, should be empty
    */
-  public static void main(final String[] args) throws Exception {
-    connectToUFS();
-
-    SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Long>() {
-      @Override
-      public Long run() throws Exception {
-
-        checkArgs(args);
-        AlluxioWorker worker = new AlluxioWorker();
-        try {
-          worker.start();
-        } catch (Exception e) {
-          LOG.error("Uncaught exception while running worker, stopping it and exiting.", e);
-          try {
-            worker.stop();
-          } catch (Exception ex) {
-            // continue to exit
-            LOG.error("Uncaught exception while stopping worker, simply exiting.", ex);
-          }
-          System.exit(-1);
-        }
-        return null;
+  public static void main(String[] args) {
+    checkArgs(args);
+    AlluxioWorker worker = new AlluxioWorker();
+    try {
+      worker.start();
+    } catch (Exception e) {
+      LOG.error("Uncaught exception while running worker, stopping it and exiting.", e);
+      try {
+        worker.stop();
+      } catch (Exception ex) {
+        // continue to exit
+        LOG.error("Uncaught exception while stopping worker, simply exiting.", ex);
       }
-    });
+      System.exit(-1);
+    }
   }
-
 
   /**
    * @return the worker RPC service bind host
@@ -247,7 +234,6 @@ public final class AlluxioWorker {
    * @throws Exception if the workers fail to start
    */
   public void start() throws Exception {
-    connectToUFS();
     // NOTE: the order to start different services is sensitive. If you change it, do it cautiously.
 
     // Start serving metrics system, this will not block
@@ -398,12 +384,5 @@ public final class AlluxioWorker {
       LOG.info("Usage: java AlluxioWorker");
       System.exit(-1);
     }
-  }
-
-  private static void connectToUFS() throws IOException {
-    Configuration conf = WorkerContext.getConf();
-    String ufsAddress = conf.get(Constants.UNDERFS_ADDRESS);
-    UnderFileSystem ufs = UnderFileSystem.get(ufsAddress, conf);
-    ufs.connectFromMaster(conf, NetworkAddressUtils.getConnectHost(ServiceType.WORKER_RPC, conf));
   }
 }
