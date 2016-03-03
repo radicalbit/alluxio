@@ -19,17 +19,9 @@ import alluxio.master.AlluxioMaster;
 import alluxio.master.MasterContext;
 import alluxio.underfs.UnderFileSystem;
 import alluxio.util.FormatUtils;
-import alluxio.util.network.NetworkAddressUtils;
-import org.apache.hadoop.security.SecurityUtil;
-import org.apache.hadoop.security.UserGroupInformation;
-import org.mortbay.log.Log;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,9 +36,6 @@ import javax.servlet.http.HttpServletResponse;
  */
 @ThreadSafe
 public final class WebInterfaceGeneralServlet extends HttpServlet {
-
-  private static final Logger LOG = LoggerFactory.getLogger(Constants.LOGGER_TYPE);
-
   /**
    * Class to make referencing tiered storage information more intuitive.
    */
@@ -204,90 +193,33 @@ public final class WebInterfaceGeneralServlet extends HttpServlet {
             FormatUtils.getSizeFromBytes(mMaster.getBlockMaster().getCapacityBytes()
                 - mMaster.getBlockMaster().getUsedBytes()));
 
-    Configuration conf = MasterContext.getConf();
-    final String ufsRoot = conf.get(Constants.UNDERFS_ADDRESS);
-    final UnderFileSystem ufs = UnderFileSystem.get(ufsRoot, conf);
+    // TODO(jiri): Should we use MasterContext here instead?
+    Configuration conf = new Configuration();
+    String ufsRoot = conf.get(Constants.UNDERFS_ADDRESS);
+    UnderFileSystem ufs = UnderFileSystem.get(ufsRoot, conf);
 
-//    String masterKeytab = conf.get(Constants.MASTER_KEYTAB_KEY);
-//    String masterPrincipal = conf.get(Constants.MASTER_PRINCIPAL_KEY);
-//    LOG.warn("masterKeytab " + masterKeytab);
-//    LOG.warn("masterPrincipal " + masterPrincipal);
-
-//    ufs.connectFromMaster(conf, NetworkAddressUtils.getConnectHost(NetworkAddressUtils.ServiceType.MASTER_WEB, conf));
-
-    String masterKeytab = conf.get(Constants.MASTER_KEYTAB_KEY);
-    String masterPrincipal = conf.get(Constants.MASTER_PRINCIPAL_KEY);
-
-//      login(Constants.MASTER_KEYTAB_KEY, masterKeytab, Constants.MASTER_PRINCIPAL_KEY,
-//              masterPrincipal, host);
-    org.apache.hadoop.conf.Configuration hConf = new org.apache.hadoop.conf.Configuration();
-    hConf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
-    hConf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
-    hConf.set("hadoop.security.authentication", "KERBEROS");
-    hConf.set(Constants.MASTER_KEYTAB_KEY, masterKeytab);
-    hConf.set(Constants.MASTER_PRINCIPAL_KEY, masterPrincipal);
-    LOG.info(" ##### ======> hadoop conf = {}", hConf);
-
-    LOG.info(" ##### ======> keytabFileKey = {}", masterKeytab);
-    LOG.info(" ##### ======> principalKey = {}", masterPrincipal);
-
-//    System.setProperty("java.security.krb5.conf", keytabFile);
-//    System.setProperty("java.security.auth.login.config", "/tmp/krb5Login-hadoop.conf");
-
-//    try {
-//      LoginContext lc = new LoginContext("SampleClient", new TextCallbackHandler());
-//      lc.login();
-//      UserGroupInformation.setConfiguration(conf);
-//      UserGroupInformation.loginUserFromSubject(lc.getSubject());
-//    } catch (LoginException e) {
-//      throw new IOException(e);
-//    }
-
-    UserGroupInformation.setConfiguration(hConf);
-//    SecurityUtil.login(conf, keytabFileKey, principalKey, hostname);
-    UserGroupInformation.loginUserFromKeytab(masterPrincipal, masterKeytab);
-
-
-    LOG.warn("UserGroupInformation.getCurrentUser AFTER" + UserGroupInformation.getCurrentUser());
-    LOG.warn("UserGroupInformation.getLoginUser AFTER" + UserGroupInformation.getLoginUser());
-
-    Map<String,Object> ufsMap;
-
-    ufsMap = SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Map<String,Object>>() {
-      @Override
-      public Map<String,Object> run() throws Exception {
-
-        Map<String,Object> ret = new HashMap<String, Object>();
-
-        long sizeBytes = ufs.getSpace(ufsRoot, UnderFileSystem.SpaceType.SPACE_TOTAL);
-        if (sizeBytes >= 0) {
-          ret.put("diskCapacity", FormatUtils.getSizeFromBytes(sizeBytes));
-        } else {
-          ret.put("diskCapacity", "UNKNOWN");
-        }
-
-        sizeBytes = ufs.getSpace(ufsRoot, UnderFileSystem.SpaceType.SPACE_USED);
-        if (sizeBytes >= 0) {
-          ret.put("diskUsedCapacity", FormatUtils.getSizeFromBytes(sizeBytes));
-        } else {
-          ret.put("diskUsedCapacity", "UNKNOWN");
-        }
-
-        sizeBytes = ufs.getSpace(ufsRoot, UnderFileSystem.SpaceType.SPACE_FREE);
-        if (sizeBytes >= 0) {
-          ret.put("diskFreeCapacity", FormatUtils.getSizeFromBytes(sizeBytes));
-        } else {
-          ret.put("diskFreeCapacity", "UNKNOWN");
-        }
-
-        StorageTierInfo[] infos = generateOrderedStorageTierInfo();
-        ret.put("storageTierInfos", infos);
-        return ret;
-      }});
-
-    for (Map.Entry<String,Object> entry : ufsMap.entrySet()) {
-      request.setAttribute(entry.getKey(),entry.getValue());
+    long sizeBytes = ufs.getSpace(ufsRoot, UnderFileSystem.SpaceType.SPACE_TOTAL);
+    if (sizeBytes >= 0) {
+      request.setAttribute("diskCapacity", FormatUtils.getSizeFromBytes(sizeBytes));
+    } else {
+      request.setAttribute("diskCapacity", "UNKNOWN");
     }
 
+    sizeBytes = ufs.getSpace(ufsRoot, UnderFileSystem.SpaceType.SPACE_USED);
+    if (sizeBytes >= 0) {
+      request.setAttribute("diskUsedCapacity", FormatUtils.getSizeFromBytes(sizeBytes));
+    } else {
+      request.setAttribute("diskUsedCapacity", "UNKNOWN");
+    }
+
+    sizeBytes = ufs.getSpace(ufsRoot, UnderFileSystem.SpaceType.SPACE_FREE);
+    if (sizeBytes >= 0) {
+      request.setAttribute("diskFreeCapacity", FormatUtils.getSizeFromBytes(sizeBytes));
+    } else {
+      request.setAttribute("diskFreeCapacity", "UNKNOWN");
+    }
+
+    StorageTierInfo[] infos = generateOrderedStorageTierInfo();
+    request.setAttribute("storageTierInfos", infos);
   }
 }
