@@ -413,6 +413,41 @@ public class AlluxioMaster {
 
   protected void startServingWebServer() throws IOException {
 
+
+    String masterKeytab = MasterContext.getConf().get(Constants.MASTER_KEYTAB_KEY);
+    String masterPrincipal = MasterContext.getConf().get(Constants.MASTER_PRINCIPAL_KEY);
+
+//      login(Constants.MASTER_KEYTAB_KEY, masterKeytab, Constants.MASTER_PRINCIPAL_KEY,
+//              masterPrincipal, host);
+    org.apache.hadoop.conf.Configuration hConf = new org.apache.hadoop.conf.Configuration();
+    hConf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+    hConf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
+    hConf.set("hadoop.security.authentication", "KERBEROS");
+    hConf.set(Constants.MASTER_KEYTAB_KEY, masterKeytab);
+    hConf.set(Constants.MASTER_PRINCIPAL_KEY, masterPrincipal);
+//    LOG.info(" ##### ======> hadoop conf = {}", conf);
+
+    LOG.info(" ##### ======> keytabFileKey = {}", masterKeytab);
+    LOG.info(" ##### ======> principalKey = {}", masterPrincipal);
+
+//    System.setProperty("java.security.krb5.conf", keytabFile);
+//    System.setProperty("java.security.auth.login.config", "/tmp/krb5Login-hadoop.conf");
+
+//    try {
+//      LoginContext lc = new LoginContext("SampleClient", new TextCallbackHandler());
+//      lc.login();
+//      UserGroupInformation.setConfiguration(conf);
+//      UserGroupInformation.loginUserFromSubject(lc.getSubject());
+//    } catch (LoginException e) {
+//      throw new IOException(e);
+//    }
+
+    UserGroupInformation.setConfiguration(hConf);
+//    SecurityUtil.login(conf, keytabFileKey, principalKey, hostname);
+    UserGroupInformation.loginUserFromKeytab(masterPrincipal, masterKeytab);
+
+
+
     SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Void>() {
       @Override
       public Void run() throws Exception {
