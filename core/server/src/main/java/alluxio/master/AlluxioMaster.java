@@ -425,7 +425,14 @@ public class AlluxioMaster {
         // Add the metrics servlet to the web server, this must be done after the metrics system starts
         mWebServer.addHandler(mMasterMetricsSystem.getServletHandler());
         // start web ui
-        mWebServer.startWebServer();
+
+        SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Void>() {
+          @Override
+          public Void run() throws Exception {
+            mWebServer.startWebServer();
+            return null;
+          }
+        });
         return null;
       }
     });
