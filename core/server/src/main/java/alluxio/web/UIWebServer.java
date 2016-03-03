@@ -14,10 +14,13 @@ package alluxio.web;
 import alluxio.AlluxioURI;
 import alluxio.Configuration;
 import alluxio.Constants;
+import alluxio.master.MasterContext;
 import alluxio.util.network.NetworkAddressUtils.ServiceType;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import org.apache.hadoop.security.SecurityUtil;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
@@ -32,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.security.PrivilegedExceptionAction;
 
 import javax.annotation.concurrent.NotThreadSafe;
 /**
@@ -154,16 +158,58 @@ public abstract class UIWebServer {
    */
   public void startWebServer() {
     try {
-      mServer.getConnectors()[0].close();
-      mServer.getConnectors()[0].open();
-      mServer.start();
-      if (mAddress.getPort() == 0) {
-        int webPort = mServer.getConnectors()[0].getLocalPort();
-        mAddress = new InetSocketAddress(mAddress.getHostName(), webPort);
-        // reset web service port
-        mConfiguration.set(mService.getPortKey(), Integer.toString(webPort));
-      }
-      LOG.info("{} started @ {}", mService.getServiceName(), mAddress);
+
+      String masterKeytab = MasterContext.getConf().get(Constants.MASTER_KEYTAB_KEY);
+      String masterPrincipal = MasterContext.getConf().get(Constants.MASTER_PRINCIPAL_KEY);
+
+//      login(Constants.MASTER_KEYTAB_KEY, masterKeytab, Constants.MASTER_PRINCIPAL_KEY,
+//              masterPrincipal, host);
+      org.apache.hadoop.conf.Configuration hConf = new org.apache.hadoop.conf.Configuration();
+      hConf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+      hConf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
+      hConf.set("hadoop.security.authentication", "KERBEROS");
+      hConf.set(Constants.MASTER_KEYTAB_KEY, masterKeytab);
+      hConf.set(Constants.MASTER_PRINCIPAL_KEY, masterPrincipal);
+//    LOG.info(" ##### ======> hadoop conf = {}", conf);
+
+      LOG.info(" ##### ======> keytabFileKey = {}", masterKeytab);
+      LOG.info(" ##### ======> principalKey = {}", masterPrincipal);
+
+//    System.setProperty("java.security.krb5.conf", keytabFile);
+//    System.setProperty("java.security.auth.login.config", "/tmp/krb5Login-hadoop.conf");
+
+//    try {
+//      LoginContext lc = new LoginContext("SampleClient", new TextCallbackHandler());
+//      lc.login();
+//      UserGroupInformation.setConfiguration(conf);
+//      UserGroupInformation.loginUserFromSubject(lc.getSubject());
+//    } catch (LoginException e) {
+//      throw new IOException(e);
+//    }
+
+      UserGroupInformation.setConfiguration(hConf);
+//    SecurityUtil.login(conf, keytabFileKey, principalKey, hostname);
+      UserGroupInformation.loginUserFromKeytab(masterPrincipal, masterKeytab);
+
+
+
+      SecurityUtil.doAsLoginUser(new PrivilegedExceptionAction<Void>() {
+        @Override
+        public Void run() throws Exception {
+
+          mServer.getConnectors()[0].close();
+          mServer.getConnectors()[0].open();
+          mServer.start();
+          if (mAddress.getPort() == 0) {
+            int webPort = mServer.getConnectors()[0].getLocalPort();
+            mAddress = new InetSocketAddress(mAddress.getHostName(), webPort);
+            // reset web service port
+            mConfiguration.set(mService.getPortKey(), Integer.toString(webPort));
+          }
+          LOG.info("{} started @ {}", mService.getServiceName(), mAddress);
+          return null;
+        }
+      });
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
