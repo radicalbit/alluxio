@@ -108,9 +108,10 @@ public final class LoginUser {
    * @param authType the authentication type in configuration
    */
   private static void checkSecurityEnabled(AuthType authType) {
-    if (authType != AuthType.SIMPLE && authType != AuthType.CUSTOM && authType != AuthType.KERBEROS) {
-      throw new UnsupportedOperationException("User is not supported in " + authType.getAuthName()
-          + " mode");
+    if (authType != AuthType.SIMPLE && authType != AuthType.CUSTOM
+        && authType != AuthType.KERBEROS) {
+      throw new UnsupportedOperationException(
+          "User is not supported in " + authType.getAuthName() + " mode");
     }
   }
 }
