@@ -27,7 +27,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
-import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +35,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.AccessControlContext;
 import java.security.AccessController;
-import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -53,8 +51,8 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
   private static final Logger LOG = LoggerFactory.getLogger(Constants.LOGGER_TYPE);
   private static final int MAX_TRY = 5;
   // TODO(hy): Add a sticky bit and narrow down the permission in hadoop 2.
-  private static final FsPermission PERMISSION = new FsPermission((short) 0777)
-          .applyUMask(FsPermission.createImmutable((short) 0000));
+  private static final FsPermission PERMISSION =
+      new FsPermission((short) 0777).applyUMask(FsPermission.createImmutable((short) 0000));
 
   private final FileSystem mFileSystem;
   private final String mUfsPrefix;
@@ -107,7 +105,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
    * @param hadoopConf Hadoop configuration
    */
   protected void prepareConfiguration(String path, Configuration conf,
-                                      org.apache.hadoop.conf.Configuration hadoopConf) {
+      org.apache.hadoop.conf.Configuration hadoopConf) {
     // On Hadoop 2.x this is strictly unnecessary since it uses ServiceLoader to automatically
     // discover available file system implementations. However this configuration setting is
     // required for earlier Hadoop versions plus it is still honoured as an override even in 2.x so
@@ -121,7 +119,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
     // FileSystem closed exception. Being configurable for unit/integration
     // test only, and not expose to the end-user currently.
     hadoopConf.set("fs.hdfs.impl.disable.cache",
-            System.getProperty("fs.hdfs.impl.disable.cache", "false"));
+        System.getProperty("fs.hdfs.impl.disable.cache", "false"));
 
     HdfsUnderFileSystemUtils.addKey(hadoopConf, conf, Constants.UNDERFS_HDFS_CONFIGURATION);
   }
@@ -133,24 +131,25 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public FSDataOutputStream create(final String path) throws IOException {
-    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<FSDataOutputStream>() {
+    return HadoopSecurityUtils
+        .runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<FSDataOutputStream>() {
 
-      @Override
-      public FSDataOutputStream run() throws IOException {
-        IOException te = null;
-        RetryPolicy retryPolicy = new CountingRetry(MAX_TRY);
-        while (retryPolicy.attemptRetry()) {
-          try {
-            LOG.debug("Creating HDFS file at {}", path);
-            return FileSystem.create(mFileSystem, new Path(path), PERMISSION);
-          } catch (IOException e) {
-            LOG.error("Retry count {} : {} ", retryPolicy.getRetryCount(), e.getMessage(), e);
-            te = e;
+          @Override
+          public FSDataOutputStream run() throws IOException {
+            IOException te = null;
+            RetryPolicy retryPolicy = new CountingRetry(MAX_TRY);
+            while (retryPolicy.attemptRetry()) {
+              try {
+                LOG.debug("Creating HDFS file at {}", path);
+                return FileSystem.create(mFileSystem, new Path(path), PERMISSION);
+              } catch (IOException e) {
+                LOG.error("Retry count {} : {} ", retryPolicy.getRetryCount(), e.getMessage(), e);
+                te = e;
+              }
+            }
+            throw te;
           }
-        }
-        throw te;
-      }
-    });
+        });
   }
 
   /**
@@ -171,7 +170,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public FSDataOutputStream create(String path, short replication, int blockSizeByte)
-          throws IOException {
+      throws IOException {
     // TODO(hy): Fix this.
     // return create(path, (short) Math.min(3, mFileSystem.getDefaultReplication()),
     // blockSizeBytes);
@@ -220,11 +219,8 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
       @Override
       public Boolean run() throws IOException {
-
         LOG.warn("UserGroupInformation.getCurrentUser " + UserGroupInformation.getCurrentUser());
         LOG.warn("UserGroupInformation.getLoginUser " + UserGroupInformation.getLoginUser());
-
-
         IOException te = null;
         RetryPolicy retryPolicy = new CountingRetry(MAX_TRY);
         while (retryPolicy.attemptRetry()) {
@@ -232,7 +228,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
             return mFileSystem.exists(new Path(path));
           } catch (IOException e) {
             LOG.error("{} try to check if {} exists : {}", retryPolicy.getRetryCount(), path,
-                    e.getMessage(), e);
+                e.getMessage(), e);
             te = e;
           }
         }
@@ -269,24 +265,25 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public List<String> getFileLocations(final String path, final long offset) throws IOException {
-    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<List<String>>() {
+    return HadoopSecurityUtils
+        .runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<List<String>>() {
 
-      @Override
-      public List<String> run() throws IOException {
-        List<String> ret = new ArrayList<String>();
-        try {
-          FileStatus fStatus = mFileSystem.getFileStatus(new Path(path));
-          BlockLocation[] bLocations = mFileSystem.getFileBlockLocations(fStatus, offset, 1);
-          if (bLocations.length > 0) {
-            String[] names = bLocations[0].getNames();
-            Collections.addAll(ret, names);
+          @Override
+          public List<String> run() throws IOException {
+            List<String> ret = new ArrayList<String>();
+            try {
+              FileStatus fStatus = mFileSystem.getFileStatus(new Path(path));
+              BlockLocation[] bLocations = mFileSystem.getFileBlockLocations(fStatus, offset, 1);
+              if (bLocations.length > 0) {
+                String[] names = bLocations[0].getNames();
+                Collections.addAll(ret, names);
+              }
+            } catch (IOException e) {
+              LOG.error("Unable to get file location for {}", path, e);
+            }
+            return ret;
           }
-        } catch (IOException e) {
-          LOG.error("Unable to get file location for {}", path, e);
-        }
-        return ret;
-      }
-    });
+        });
   }
 
   @Override
@@ -303,7 +300,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
             return fs.getLen();
           } catch (IOException e) {
             LOG.error("{} try to get file size for {} : {}", retryPolicy.getRetryCount(), path,
-                    e.getMessage(), e);
+                e.getMessage(), e);
           }
         }
         return -1L;
@@ -372,8 +369,10 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
       @Override
       public String[] run() throws IOException {
 
-        LOG.warn("UserGroupInformation.getCurrentUser INTERNAL " + UserGroupInformation.getCurrentUser());
-        LOG.warn("UserGroupInformation.getLoginUser INTERNAL " + UserGroupInformation.getLoginUser());
+        LOG.warn("UserGroupInformation.getCurrentUser INTERNAL "
+            + UserGroupInformation.getCurrentUser());
+        LOG.warn(
+            "UserGroupInformation.getLoginUser INTERNAL " + UserGroupInformation.getLoginUser());
 
         FileStatus[] files;
         try {
@@ -405,35 +404,36 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
   @Override
   public void connectFromMaster(Configuration conf, String host) throws IOException {
     if (!conf.containsKey(Constants.MASTER_KEYTAB_KEY)
-            || !conf.containsKey(Constants.MASTER_PRINCIPAL_KEY)) {
+        || !conf.containsKey(Constants.MASTER_PRINCIPAL_KEY)) {
       return;
     }
     String masterKeytab = conf.get(Constants.MASTER_KEYTAB_KEY);
     String masterPrincipal = conf.get(Constants.MASTER_PRINCIPAL_KEY);
 
     login(Constants.MASTER_KEYTAB_KEY, masterKeytab, Constants.MASTER_PRINCIPAL_KEY,
-            masterPrincipal, host);
+        masterPrincipal, host);
   }
 
   @Override
   public void connectFromWorker(Configuration conf, String host) throws IOException {
     if (!conf.containsKey(Constants.WORKER_KEYTAB_KEY)
-            || !conf.containsKey(Constants.WORKER_PRINCIPAL_KEY)) {
+        || !conf.containsKey(Constants.WORKER_PRINCIPAL_KEY)) {
       return;
     }
     String workerKeytab = conf.get(Constants.WORKER_KEYTAB_KEY);
     String workerPrincipal = conf.get(Constants.WORKER_PRINCIPAL_KEY);
 
     login(Constants.WORKER_KEYTAB_KEY, workerKeytab, Constants.WORKER_PRINCIPAL_KEY,
-            workerPrincipal, host);
+        workerPrincipal, host);
   }
 
-  private void login(String keytabFileKey, String keytabFile, String principalKey,
-                     String principal, String hostname) throws IOException {
-    LOG.info(" ##### ======> logging in keytabFileKey = {}, " +
-                    "keytabFile = {}, principalKey = {}, principal = {}, hostname = {}",
-            keytabFileKey, keytabFile, principalKey, principal, hostname);
-//    Configuration conf = new Configuration();
+  private void login(String keytabFileKey, String keytabFile, String principalKey, String principal,
+      String hostname) throws IOException {
+    LOG.info(
+        " ##### ======> logging in keytabFileKey = {}, "
+            + "keytabFile = {}, principalKey = {}, principal = {}, hostname = {}",
+        keytabFileKey, keytabFile, principalKey, principal, hostname);
+    // Configuration conf = new Configuration();
     org.apache.hadoop.conf.Configuration conf = new org.apache.hadoop.conf.Configuration();
     conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
     conf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
@@ -445,26 +445,26 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
     LOG.info(" ##### ======> keytabFileKey = {}", conf.get(keytabFileKey));
     LOG.info(" ##### ======> principalKey = {}", conf.get(principalKey));
 
-//    System.setProperty("java.security.krb5.conf", keytabFile);
-//    System.setProperty("java.security.auth.login.config", "/tmp/krb5Login-hadoop.conf");
+    // System.setProperty("java.security.krb5.conf", keytabFile);
+    // System.setProperty("java.security.auth.login.config", "/tmp/krb5Login-hadoop.conf");
 
-//    try {
-//      LoginContext lc = new LoginContext("SampleClient", new TextCallbackHandler());
-//      lc.login();
-//      UserGroupInformation.setConfiguration(conf);
-//      UserGroupInformation.loginUserFromSubject(lc.getSubject());
-//    } catch (LoginException e) {
-//      throw new IOException(e);
-//    }
+    // try {
+    // LoginContext lc = new LoginContext("SampleClient", new TextCallbackHandler());
+    // lc.login();
+    // UserGroupInformation.setConfiguration(conf);
+    // UserGroupInformation.loginUserFromSubject(lc.getSubject());
+    // } catch (LoginException e) {
+    // throw new IOException(e);
+    // }
 
     UserGroupInformation.setConfiguration(conf);
-//    SecurityUtil.login(conf, keytabFileKey, principalKey, hostname);
+    // SecurityUtil.login(conf, keytabFileKey, principalKey, hostname);
     UserGroupInformation.loginUserFromKeytab(principal, keytabFile);
 
-//    org.apache.hadoop.conf.Configuration conf = new org.apache.hadoop.conf.Configuration();
-//    conf.set(keytabFileKey, keytabFile);
-//    conf.set(principalKey, principal);
-//    SecurityUtil.login(conf, keytabFileKey, principalKey, hostname);
+    // org.apache.hadoop.conf.Configuration conf = new org.apache.hadoop.conf.Configuration();
+    // conf.set(keytabFileKey, keytabFile);
+    // conf.set(principalKey, principal);
+    // SecurityUtil.login(conf, keytabFileKey, principalKey, hostname);
   }
 
   @Override
@@ -482,7 +482,8 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
               LOG.debug("Trying to create existing directory at {}", path);
               return false;
             }
-            // Create directories one by one with explicit permissions to ensure no umask is applied,
+            // Create directories one by one with explicit permissions to ensure no umask is
+            // applied,
             // using mkdirs will apply the permission only to the last directory
             Stack<Path> dirsToMake = new Stack<Path>();
             dirsToMake.push(hdfsPath);
@@ -499,7 +500,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
             return true;
           } catch (IOException e) {
             LOG.error("{} try to make directory for {} : {}", retryPolicy.getRetryCount(), path,
-                    e.getMessage(), e);
+                e.getMessage(), e);
             te = e;
           }
         }
@@ -510,23 +511,25 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public FSDataInputStream open(final String path) throws IOException {
-    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<FSDataInputStream>() {
+    return HadoopSecurityUtils
+        .runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<FSDataInputStream>() {
 
-      @Override
-      public FSDataInputStream run() throws IOException {
-        IOException te = null;
-        RetryPolicy retryPolicy = new CountingRetry(MAX_TRY);
-        while (retryPolicy.attemptRetry()) {
-          try {
-            return mFileSystem.open(new Path(path));
-          } catch (IOException e) {
-            LOG.error("{} try to open {} : {}", retryPolicy.getRetryCount(), path, e.getMessage(), e);
-            te = e;
+          @Override
+          public FSDataInputStream run() throws IOException {
+            IOException te = null;
+            RetryPolicy retryPolicy = new CountingRetry(MAX_TRY);
+            while (retryPolicy.attemptRetry()) {
+              try {
+                return mFileSystem.open(new Path(path));
+              } catch (IOException e) {
+                LOG.error("{} try to open {} : {}", retryPolicy.getRetryCount(), path,
+                    e.getMessage(), e);
+                te = e;
+              }
+            }
+            throw te;
           }
-        }
-        throw te;
-      }
-    });
+        });
   }
 
   @Override
@@ -553,7 +556,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
             return mFileSystem.rename(new Path(src), new Path(dst));
           } catch (IOException e) {
             LOG.error("{} try to rename {} to {} : {}", retryPolicy.getRetryCount(), src, dst,
-                    e.getMessage(), e);
+                e.getMessage(), e);
             te = e;
           }
         }
@@ -576,7 +579,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
         try {
           FileStatus fileStatus = mFileSystem.getFileStatus(new Path(path));
           LOG.info("Changing file '{}' permissions from: {} to {}", fileStatus.getPath(),
-                  fileStatus.getPermission(), posixPerm);
+              fileStatus.getPermission(), posixPerm);
           FsPermission perm = new FsPermission(Short.parseShort(posixPerm));
           mFileSystem.setPermission(fileStatus.getPath(), perm);
           return null;

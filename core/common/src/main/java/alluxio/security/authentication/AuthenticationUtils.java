@@ -16,16 +16,27 @@ import alluxio.Constants;
 import alluxio.security.LoginUser;
 import alluxio.util.network.NetworkAddressUtils;
 
-import org.apache.thrift.transport.TFramedTransport;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
+import org.apache.hadoop.security.HadoopKerberosName;
+import org.apache.hadoop.security.SaslRpcServer;
+import org.apache.hadoop.security.SecurityUtil;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.thrift.transport.TTransportFactory;
+import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.transport.TSaslServerTransport;
+import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TSocket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.annotation.concurrent.ThreadSafe;
-import javax.security.sasl.SaslException;
+import javax.security.sasl.Sasl;
+//import javax.security.sasl.SaslException;
 
 /**
  * This class provides factory methods for authentication in Alluxio. Based on different
@@ -34,6 +45,9 @@ import javax.security.sasl.SaslException;
  */
 @ThreadSafe
 public final class AuthenticationUtils {
+
+  private static final Logger LOG = LoggerFactory.getLogger(Constants.LOGGER_TYPE);
+
   /**
    * For server side, this method returns a {@link TTransportFactory} based on the auth type. It is
    * used as one argument to build a Thrift {@link org.apache.thrift.server.TServer}. If the auth
@@ -41,21 +55,52 @@ public final class AuthenticationUtils {
    *
    * @param conf Alluxio Configuration
    * @return a corresponding TTransportFactory
-   * @throws SaslException if building a TransportFactory fails
+   * @throws IOException if building a TransportFactory fails
    */
   public static TTransportFactory getServerTransportFactory(Configuration conf)
-      throws SaslException {
+      throws IOException {
     AuthType authType = conf.getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class);
     switch (authType) {
       case NOSASL:
-        return new TFramedTransport.Factory((int)
-            conf.getBytes(Constants.THRIFT_FRAME_SIZE_BYTES_MAX));
+        return new TFramedTransport.Factory(
+            (int) conf.getBytes(Constants.THRIFT_FRAME_SIZE_BYTES_MAX));
       case SIMPLE: // intended to fall through
       case CUSTOM:
         return PlainSaslUtils.getPlainServerTransportFactory(authType, conf);
-      case KERBEROS:
-        throw new UnsupportedOperationException("getServerTransportFactory: Kerberos is "
-            + "not supported currently.");
+      case KERBEROS: {
+
+        String masterPrincipal = conf.get(Constants.MASTER_PRINCIPAL_KEY);
+
+        String principal = SecurityUtil.getServerPrincipal(masterPrincipal,
+            InetAddress.getLocalHost().getCanonicalHostName());
+        HadoopKerberosName name = new HadoopKerberosName(principal);
+        String primary = name.getServiceName();
+        String instance = name.getHostName();
+
+        UserGroupInformation serverUser = UserGroupInformation.getLoginUser();
+        LOG.info("Current user: {}", serverUser);
+
+        // Use authorization and confidentiality
+        Map<String, String> saslProperties = new HashMap<String, String>();
+        saslProperties.put(Sasl.QOP, "auth-conf");
+
+        // Creating the server definition
+        TSaslServerTransport.Factory saslTransportFactory = new TSaslServerTransport.Factory();
+        saslTransportFactory.addServerDefinition("GSSAPI", // tell SASL to use GSSAPI, which
+                                                           // supports Kerberos
+            "", // primary, // kerberos primary for server - "myprincipal" in
+                // myprincipal/my.server.com@MY.REALM
+            "", // instance, // kerberos instance for server - "my.server.com" in
+                // myprincipal/my.server.com@MY.REALM
+            saslProperties, // Properties set, above
+            new SaslRpcServer.SaslGssCallbackHandler()); // Ensures that authenticated user is the
+                                                         // same as the authorized user
+
+        // Make sure the TTransportFactory is performing a UGI.doAs
+//        TTransportFactory ugiTransportFactory =
+        return new TUGIAssumingTransportFactory(saslTransportFactory, serverUser);
+
+      }
       default:
         throw new UnsupportedOperationException("getServerTransportFactory: Unsupported "
             + "authentication type: " + authType.getAuthName());
@@ -89,8 +134,8 @@ public final class AuthenticationUtils {
         String username = LoginUser.get(conf).getName();
         return PlainSaslUtils.getPlainClientTransport(username, "noPassword", tTransport);
       case KERBEROS:
-        throw new UnsupportedOperationException("getClientTransport: Kerberos is not "
-            + "supported currently.");
+        throw new UnsupportedOperationException(
+            "getClientTransport: Kerberos is not " + "supported currently.");
       default:
         throw new UnsupportedOperationException(
             "getClientTransport: Unsupported authentication type: " + authType.getAuthName());
