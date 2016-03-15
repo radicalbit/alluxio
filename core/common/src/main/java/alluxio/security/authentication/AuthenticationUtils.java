@@ -89,10 +89,10 @@ public final class AuthenticationUtils {
         TSaslServerTransport.Factory saslTransportFactory = new TSaslServerTransport.Factory();
         saslTransportFactory.addServerDefinition("GSSAPI", // tell SASL to use GSSAPI, which
                                                            // supports Kerberos
-            "", // primary, // kerberos primary for server - "myprincipal" in
-                // myprincipal/my.server.com@MY.REALM
-            "", // instance, // kerberos instance for server - "my.server.com" in
-                // myprincipal/my.server.com@MY.REALM
+            primary, // primary, // kerberos primary for server - "myprincipal" in
+            // myprincipal/my.server.com@MY.REALM
+            instance, // instance, // kerberos instance for server - "my.server.com" in
+            // myprincipal/my.server.com@MY.REALM
             saslProperties, // Properties set, above
             new SaslRpcServer.SaslGssCallbackHandler()); // Ensures that authenticated user is the
                                                          // same as the authorized user
@@ -136,6 +136,14 @@ public final class AuthenticationUtils {
         return PlainSaslUtils.getPlainClientTransport(username, "noPassword", tTransport);
       case KERBEROS: {
 
+        String masterPrincipal = conf.get(Constants.MASTER_PRINCIPAL_KEY);
+
+        String principal = SecurityUtil.getServerPrincipal(masterPrincipal,
+                InetAddress.getLocalHost().getCanonicalHostName());
+        HadoopKerberosName name = new HadoopKerberosName(principal);
+        String primary = name.getServiceName();
+        String instance = name.getHostName();
+
         Map<String, String> saslProperties = new HashMap<String, String>();
         // Use authorization and confidentiality
         saslProperties.put(Sasl.QOP, "auth-conf");
@@ -147,9 +155,9 @@ public final class AuthenticationUtils {
                                                                                 // GSSAPI, which
                                                                                 // supports Kerberos
             null, // authorizationid - null
-            null, // kerberos primary for server - "myprincipal" in
+            primary, // kerberos primary for server - "myprincipal" in
                   // myprincipal/my.server.com@MY.REALM
-            null, // kerberos instance for server - "my.server.com" in
+            instance, // kerberos instance for server - "my.server.com" in
                   // myprincipal/my.server.com@MY.REALM
             saslProperties, // Properties set, above
             null, // callback handler - null
