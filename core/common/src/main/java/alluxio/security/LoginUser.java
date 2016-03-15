@@ -17,7 +17,13 @@ import alluxio.security.authentication.AuthType;
 import alluxio.security.login.AppLoginModule;
 import alluxio.security.login.LoginModuleConfiguration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
+import java.security.Principal;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -36,6 +42,8 @@ import javax.security.auth.login.LoginException;
  */
 @ThreadSafe
 public final class LoginUser {
+
+  private static final Logger LOG = LoggerFactory.getLogger(Constants.LOGGER_TYPE);
 
   /** User instance of the login user in Alluxio client process. */
   private static User sLoginUser;
@@ -88,7 +96,23 @@ public final class LoginUser {
               new LoginModuleConfiguration());
       loginContext.login();
 
-      Set<User> userSet = subject.getPrincipals(User.class);
+      LOG.debug("authentication type {} ", conf.getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class));
+
+      Set<User> userSet;
+
+      if (conf.getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class).equals(AuthType.KERBEROS)) {
+
+        userSet = new HashSet<>();
+        Iterator<Principal> i = subject.getPrincipals().iterator();
+        while (i.hasNext()) {
+          Principal p = i.next();
+          LOG.debug("retrieving principal {} ",p);
+          userSet.add(new User(p.getName()));
+        }
+      } else {
+        userSet = subject.getPrincipals(User.class);
+      }
+
       if (userSet.isEmpty()) {
         throw new LoginException("No Alluxio User is found.");
       }

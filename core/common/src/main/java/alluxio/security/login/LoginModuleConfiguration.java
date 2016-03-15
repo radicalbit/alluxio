@@ -68,7 +68,7 @@ public final class LoginModuleConfiguration extends Configuration {
       new AppConfigurationEntry[] {APP_LOGIN, OS_SPECIFIC_LOGIN, ALLUXIO_LOGIN};
 
   private static final AppConfigurationEntry[] KERBEROS =
-          new AppConfigurationEntry[]{OS_SPECIFIC_LOGIN, KERBEROS_LOGIN};
+          new AppConfigurationEntry[]{KERBEROS_LOGIN};
 
   @Override
   public AppConfigurationEntry[] getAppConfigurationEntry(String appName) {
