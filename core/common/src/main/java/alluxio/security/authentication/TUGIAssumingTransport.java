@@ -35,9 +35,9 @@ public class TUGIAssumingTransport extends TFilterTransport {
   private static final Logger log = LoggerFactory.getLogger(TUGIAssumingTransport.class);
   protected UserGroupInformation mUgi;
 
-  public TUGIAssumingTransport(TTransport wrapped, UserGroupInformation mUgi) {
+  public TUGIAssumingTransport(TTransport wrapped, UserGroupInformation ugi) {
     super(wrapped);
-    mUgi = mUgi;
+    mUgi = ugi;
   }
 
   @Override
