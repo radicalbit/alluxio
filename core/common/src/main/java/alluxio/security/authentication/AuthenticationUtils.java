@@ -78,6 +78,8 @@ public final class AuthenticationUtils {
         String primary = name.getServiceName();
         String instance = name.getHostName();
 
+        LOG.debug("SERVER TRANSPORT primary instance {} {}", primary, instance);
+
         UserGroupInformation serverUser = UserGroupInformation.getLoginUser();
         LOG.info("Current user: {}", serverUser);
 
@@ -143,6 +145,8 @@ public final class AuthenticationUtils {
         HadoopKerberosName name = new HadoopKerberosName(principal);
         String primary = name.getServiceName();
         String instance = name.getHostName();
+
+        LOG.debug("CLIENT TRANSPORT primary instance {} {}", primary, instance);
 
         Map<String, String> saslProperties = new HashMap<String, String>();
         // Use authorization and confidentiality
