@@ -40,7 +40,7 @@ public class TUGIAssumingTransportFactory extends TTransportFactory {
   /**
    * constructor.
    * @param wrapped wrapped
-   * @param ugi ugi
+   * @param ugi mUgi
    */
   public TUGIAssumingTransportFactory(TTransportFactory wrapped, UserGroupInformation ugi) {
     Preconditions.checkNotNull(wrapped);

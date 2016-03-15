@@ -91,22 +91,23 @@ public final class LoginUser {
 
       // Create LoginContext based on authType, corresponding LoginModule should be registered
       // under the authType name in LoginModuleConfiguration.
-      LoginContext loginContext =
-          new LoginContext(authType.getAuthName(), subject, callbackHandler,
-              new LoginModuleConfiguration());
+      LoginContext loginContext = new LoginContext(authType.getAuthName(), subject, callbackHandler,
+          new LoginModuleConfiguration());
       loginContext.login();
 
-      LOG.debug("authentication type {} ", conf.getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class));
+      LOG.debug("authentication type {} ",
+          conf.getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class));
 
       Set<User> userSet;
 
-      if (conf.getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class).equals(AuthType.KERBEROS)) {
+      if (conf.getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class)
+          .equals(AuthType.KERBEROS)) {
 
         userSet = new HashSet<>();
         Iterator<Principal> i = subject.getPrincipals().iterator();
         while (i.hasNext()) {
           Principal p = i.next();
-          LOG.debug("retrieving principal {} ",p);
+          LOG.debug("retrieving principal {} ", p);
           userSet.add(new User(p.getName()));
         }
       } else {

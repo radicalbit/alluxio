@@ -25,6 +25,7 @@ import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSaslServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TSocket;
+import org.apache.thrift.transport.TSaslClientTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -133,9 +134,32 @@ public final class AuthenticationUtils {
       case CUSTOM:
         String username = LoginUser.get(conf).getName();
         return PlainSaslUtils.getPlainClientTransport(username, "noPassword", tTransport);
-      case KERBEROS:
-        throw new UnsupportedOperationException(
-            "getClientTransport: Kerberos is not " + "supported currently.");
+      case KERBEROS: {
+
+        Map<String, String> saslProperties = new HashMap<String, String>();
+        // Use authorization and confidentiality
+        saslProperties.put(Sasl.QOP, "auth-conf");
+
+        UserGroupInformation currentUser = UserGroupInformation.getCurrentUser();
+
+        // SASL client transport -- does the Kerberos lifting for us
+        TSaslClientTransport saslTransport = new TSaslClientTransport("GSSAPI", // tell SASL to use
+                                                                                // GSSAPI, which
+                                                                                // supports Kerberos
+            null, // authorizationid - null
+            null, // kerberos primary for server - "myprincipal" in
+                  // myprincipal/my.server.com@MY.REALM
+            null, // kerberos instance for server - "my.server.com" in
+                  // myprincipal/my.server.com@MY.REALM
+            saslProperties, // Properties set, above
+            null, // callback handler - null
+            AuthenticationUtils.createTSocket(serverAddress,
+                conf.getInt(Constants.SECURITY_AUTHENTICATION_SOCKET_TIMEOUT_MS))); // underlying
+                                                                                    // transport
+
+        // Make sure the transport is opened as the user we logged in as
+        return new TUGIAssumingTransport(saslTransport, currentUser);
+      }
       default:
         throw new UnsupportedOperationException(
             "getClientTransport: Unsupported authentication type: " + authType.getAuthName());
