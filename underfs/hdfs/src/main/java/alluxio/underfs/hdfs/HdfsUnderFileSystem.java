@@ -132,7 +132,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
   @Override
   public FSDataOutputStream create(final String path) throws IOException {
     return HadoopSecurityUtils
-        .runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<FSDataOutputStream>() {
+        .runAsCurrentUser(new HadoopSecurityUtils.AlluxioSecuredRunner<FSDataOutputStream>() {
 
           @Override
           public FSDataOutputStream run() throws IOException {
@@ -193,7 +193,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public boolean delete(final String path, final boolean recursive) throws IOException {
-    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Boolean>() {
+    return HadoopSecurityUtils.runAsCurrentUser(new HadoopSecurityUtils.AlluxioSecuredRunner<Boolean>() {
 
       @Override
       public Boolean run() throws IOException {
@@ -215,7 +215,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public boolean exists(final String path) throws IOException {
-    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Boolean>() {
+    return HadoopSecurityUtils.runAsCurrentUser(new HadoopSecurityUtils.AlluxioSecuredRunner<Boolean>() {
 
       @Override
       public Boolean run() throws IOException {
@@ -239,7 +239,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public long getBlockSizeByte(final String path) throws IOException {
-    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Long>() {
+    return HadoopSecurityUtils.runAsCurrentUser(new HadoopSecurityUtils.AlluxioSecuredRunner<Long>() {
 
       @Override
       public Long run() throws IOException {
@@ -266,7 +266,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
   @Override
   public List<String> getFileLocations(final String path, final long offset) throws IOException {
     return HadoopSecurityUtils
-        .runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<List<String>>() {
+        .runAsCurrentUser(new HadoopSecurityUtils.AlluxioSecuredRunner<List<String>>() {
 
           @Override
           public List<String> run() throws IOException {
@@ -288,7 +288,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public long getFileSize(final String path) throws IOException {
-    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Long>() {
+    return HadoopSecurityUtils.runAsCurrentUser(new HadoopSecurityUtils.AlluxioSecuredRunner<Long>() {
 
       @Override
       public Long run() throws IOException {
@@ -310,7 +310,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public long getModificationTimeMs(final String path) throws IOException {
-    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Long>() {
+    return HadoopSecurityUtils.runAsCurrentUser(new HadoopSecurityUtils.AlluxioSecuredRunner<Long>() {
 
       @Override
       public Long run() throws IOException {
@@ -328,7 +328,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
   public long getSpace(final String path, final SpaceType type) throws IOException {
     // Ignoring the path given, will give information for entire cluster
     // as Alluxio can load/store data out of entire HDFS cluster
-    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Long>() {
+    return HadoopSecurityUtils.runAsCurrentUser(new HadoopSecurityUtils.AlluxioSecuredRunner<Long>() {
 
       @Override
       public Long run() throws IOException {
@@ -351,7 +351,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public boolean isFile(final String path) throws IOException {
-    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Boolean>() {
+    return HadoopSecurityUtils.runAsCurrentUser(new HadoopSecurityUtils.AlluxioSecuredRunner<Boolean>() {
 
       @Override
       public Boolean run() throws IOException {
@@ -364,7 +364,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
   public String[] list(final String path) throws IOException {
     LOG.warn("UserGroupInformation.getCurrentUser " + UserGroupInformation.getCurrentUser());
     LOG.warn("UserGroupInformation.getLoginUser " + UserGroupInformation.getLoginUser());
-    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<String[]>() {
+    return HadoopSecurityUtils.runAsCurrentUser(new HadoopSecurityUtils.AlluxioSecuredRunner<String[]>() {
 
       @Override
       public String[] run() throws IOException {
@@ -469,7 +469,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public boolean mkdirs(final String path, final boolean createParent) throws IOException {
-    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Boolean>() {
+    return HadoopSecurityUtils.runAsCurrentUser(new HadoopSecurityUtils.AlluxioSecuredRunner<Boolean>() {
 
       @Override
       public Boolean run() throws IOException {
@@ -512,7 +512,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
   @Override
   public FSDataInputStream open(final String path) throws IOException {
     return HadoopSecurityUtils
-        .runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<FSDataInputStream>() {
+        .runAsCurrentUser(new HadoopSecurityUtils.AlluxioSecuredRunner<FSDataInputStream>() {
 
           @Override
           public FSDataInputStream run() throws IOException {
@@ -534,7 +534,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public boolean rename(final String src, final String dst) throws IOException {
-    return HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Boolean>() {
+    return HadoopSecurityUtils.runAsCurrentUser(new HadoopSecurityUtils.AlluxioSecuredRunner<Boolean>() {
 
       @Override
       public Boolean run() throws IOException {
@@ -572,7 +572,7 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   @Override
   public void setPermission(final String path, final String posixPerm) throws IOException {
-    HadoopSecurityUtils.runSecured(new HadoopSecurityUtils.AlluxioSecuredRunner<Void>() {
+    HadoopSecurityUtils.runAsCurrentUser(new HadoopSecurityUtils.AlluxioSecuredRunner<Void>() {
 
       @Override
       public Void run() throws IOException {
