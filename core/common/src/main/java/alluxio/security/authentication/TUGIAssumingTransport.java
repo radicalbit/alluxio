@@ -32,9 +32,14 @@ import java.security.PrivilegedExceptionAction;
  * Lifted from Apache Hive 0.14
  */
 public class TUGIAssumingTransport extends TFilterTransport {
-  private static final Logger log = LoggerFactory.getLogger(TUGIAssumingTransport.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TUGIAssumingTransport.class);
   protected UserGroupInformation mUgi;
 
+  /**
+   * create an instance that wraps a TTransport.
+   * @param wrapped TTransport to be wrappeded
+   * @param ugi usergroupinformation
+   */
   public TUGIAssumingTransport(TTransport wrapped, UserGroupInformation ugi) {
     super(wrapped);
     mUgi = ugi;
@@ -45,7 +50,7 @@ public class TUGIAssumingTransport extends TFilterTransport {
     try {
 
       UserGroupInformation currentUser = UserGroupInformation.getCurrentUser();
-      log.info("Current user: {}", currentUser);
+      LOG.info("Current user: {}", currentUser);
 
       mUgi.doAs(new PrivilegedExceptionAction<Void>() {
         @Override
@@ -53,7 +58,7 @@ public class TUGIAssumingTransport extends TFilterTransport {
           try {
 
             UserGroupInformation currentUser = UserGroupInformation.getCurrentUser();
-            log.info("Current user: {}", currentUser);
+            LOG.info("Current user: {}", currentUser);
 
             getWrapped().open();
           } catch (TTransportException tte) {
@@ -73,7 +78,7 @@ public class TUGIAssumingTransport extends TFilterTransport {
       throw new RuntimeException("Received an ie we never threw!", ie);
     } catch (RuntimeException rte) {
       if (rte.getCause() instanceof TTransportException) {
-        throw (TTransportException) rte.getCause();
+        throw new TTransportException(rte.getCause());
       } else {
         throw rte;
       }

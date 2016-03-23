@@ -21,6 +21,10 @@ import org.apache.thrift.transport.TTransportException;
 public class TFilterTransport extends TTransport {
   private final TTransport mWrapped;
 
+  /**
+   * create an instance that wraps a TTransport.
+   * @param wrapped the TTransport to be wrapped
+   */
   public TFilterTransport(TTransport wrapped) {
     mWrapped = wrapped;
   }
