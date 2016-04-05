@@ -17,6 +17,7 @@ import alluxio.security.authentication.AuthType;
 import alluxio.security.login.AppLoginModule;
 import alluxio.security.login.LoginModuleConfiguration;
 
+import org.apache.hadoop.security.HadoopKerberosName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,11 +105,10 @@ public final class LoginUser {
           .equals(AuthType.KERBEROS)) {
 
         userSet = new HashSet<>();
-        Iterator<Principal> i = subject.getPrincipals().iterator();
-        while (i.hasNext()) {
-          Principal p = i.next();
+        for (Principal p : subject.getPrincipals()) {
           LOG.debug("retrieving principal {} ", p);
-          userSet.add(new User(p.getName()));
+          String name = new HadoopKerberosName(p.getName()).getServiceName();
+          userSet.add(new User(name));
         }
       } else {
         userSet = subject.getPrincipals(User.class);
