@@ -2145,11 +2145,13 @@ public final class FileSystemMaster extends AbstractMaster {
    * @throws AccessControlException if the client user information cannot be accessed
    */
   private String getClientUser() throws AccessControlException {
+    LOG.debug("getClientUser ");
     try {
       User authorizedUser = PlainSaslServer.AuthorizedClientUser.get(MasterContext.getConf());
       if (authorizedUser == null) {
         authorizedUser = LoginUser.get(MasterContext.getConf());
       }
+      LOG.debug("ClientUser  = {} ", authorizedUser);
       if (authorizedUser == null) {
         throw new AccessControlException(
             ExceptionMessage.AUTHORIZED_CLIENT_USER_IS_NULL.getMessage());
