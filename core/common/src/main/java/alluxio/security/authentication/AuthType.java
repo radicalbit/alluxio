@@ -39,8 +39,7 @@ public enum AuthType {
   CUSTOM,
 
   /**
-   * User is aware in Alluxio. The user is verified by Kerberos authentication. NOTE: this
-   * authentication is not supported.
+   * User is aware in Alluxio. The user is verified by Kerberos authentication.
    */
   KERBEROS;
 

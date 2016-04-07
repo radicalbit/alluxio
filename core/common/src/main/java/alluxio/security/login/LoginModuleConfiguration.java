@@ -14,6 +14,10 @@ package alluxio.security.login;
 import alluxio.security.User;
 import alluxio.security.authentication.AuthType;
 
+import com.google.common.collect.ImmutableMap;
+
+import org.apache.hadoop.security.authentication.util.KerberosUtil;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,8 +53,10 @@ public final class LoginModuleConfiguration extends Configuration {
   private static final AppConfigurationEntry ALLUXIO_LOGIN = new AppConfigurationEntry(
       AlluxioLoginModule.class.getName(), LoginModuleControlFlag.REQUIRED, EMPTY_JAAS_OPTIONS);
 
-  // TODO(dong): add Kerberos_LOGIN module
-  // private static final AppConfigurationEntry KERBEROS_LOGIN = ...
+  private static final AppConfigurationEntry KERBEROS_LOGIN =
+      new AppConfigurationEntry(KerberosUtil.getKrb5LoginModuleName(),
+          AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL, ImmutableMap.of("useDefaultCcache",
+              "true", "doNotPrompt", "true", "useTicketCache", "true", "renewTGT", "true"));
 
   /**
    * In the {@link AuthType#SIMPLE} mode, JAAS first tries to retrieve the user name set by the
@@ -61,8 +67,8 @@ public final class LoginModuleConfiguration extends Configuration {
   private static final AppConfigurationEntry[] SIMPLE =
       new AppConfigurationEntry[] {APP_LOGIN, OS_SPECIFIC_LOGIN, ALLUXIO_LOGIN};
 
-  // TODO(dong): add Kerberos mode
-  // private static final AppConfigurationEntry[] KERBEROS = ...
+  private static final AppConfigurationEntry[] KERBEROS =
+          new AppConfigurationEntry[]{KERBEROS_LOGIN};
 
   @Override
   public AppConfigurationEntry[] getAppConfigurationEntry(String appName) {
@@ -70,8 +76,7 @@ public final class LoginModuleConfiguration extends Configuration {
         || appName.equalsIgnoreCase(AuthType.CUSTOM.getAuthName())) {
       return SIMPLE;
     } else if (appName.equalsIgnoreCase(AuthType.KERBEROS.getAuthName())) {
-      // TODO(dong): return KERBEROS;
-      throw new UnsupportedOperationException("Kerberos is not supported currently.");
+      return KERBEROS;
     }
     return null;
   }

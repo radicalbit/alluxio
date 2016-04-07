@@ -17,7 +17,13 @@ import alluxio.security.authentication.AuthType;
 import alluxio.security.login.AppLoginModule;
 import alluxio.security.login.LoginModuleConfiguration;
 
+import org.apache.hadoop.security.HadoopKerberosName;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
+import java.security.Principal;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -36,6 +42,8 @@ import javax.security.auth.login.LoginException;
  */
 @ThreadSafe
 public final class LoginUser {
+
+  private static final Logger LOG = LoggerFactory.getLogger(Constants.LOGGER_TYPE);
 
   /** User instance of the login user in Alluxio client process. */
   private static User sLoginUser;
@@ -83,12 +91,28 @@ public final class LoginUser {
 
       // Create LoginContext based on authType, corresponding LoginModule should be registered
       // under the authType name in LoginModuleConfiguration.
-      LoginContext loginContext =
-          new LoginContext(authType.getAuthName(), subject, callbackHandler,
-              new LoginModuleConfiguration());
+      LoginContext loginContext = new LoginContext(authType.getAuthName(), subject, callbackHandler,
+          new LoginModuleConfiguration());
       loginContext.login();
 
-      Set<User> userSet = subject.getPrincipals(User.class);
+      LOG.debug("authentication type {} ",
+          conf.getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class));
+
+      Set<User> userSet;
+
+      if (conf.getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class)
+          .equals(AuthType.KERBEROS)) {
+
+        userSet = new HashSet<>();
+        for (Principal p : subject.getPrincipals()) {
+          LOG.debug("retrieving principal {} ", p);
+          String name = new HadoopKerberosName(p.getName()).getServiceName();
+          userSet.add(new User(name));
+        }
+      } else {
+        userSet = subject.getPrincipals(User.class);
+      }
+
       if (userSet.isEmpty()) {
         throw new LoginException("No Alluxio User is found.");
       }
@@ -108,10 +132,10 @@ public final class LoginUser {
    * @param authType the authentication type in configuration
    */
   private static void checkSecurityEnabled(AuthType authType) {
-    // TODO(dong): add Kerberos condition check.
-    if (authType != AuthType.SIMPLE && authType != AuthType.CUSTOM) {
-      throw new UnsupportedOperationException("User is not supported in " + authType.getAuthName()
-          + " mode");
+    if (authType != AuthType.SIMPLE && authType != AuthType.CUSTOM
+        && authType != AuthType.KERBEROS) {
+      throw new UnsupportedOperationException(
+          "User is not supported in " + authType.getAuthName() + " mode");
     }
   }
 }
