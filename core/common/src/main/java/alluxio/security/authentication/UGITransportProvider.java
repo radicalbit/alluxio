@@ -16,7 +16,6 @@ import alluxio.Constants;
 import alluxio.util.network.NetworkAddressUtils;
 
 import org.apache.hadoop.security.HadoopKerberosName;
-import org.apache.hadoop.security.SaslRpcServer;
 import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
 
@@ -154,7 +153,7 @@ public final class UGITransportProvider implements TransportProvider {
           instance, // instance, // kerberos instance for server - "my.server.com" in
           // myprincipal/my.server.com@MY.REALM
           saslProperties, // Properties set, above
-          new SaslRpcServer.SaslGssCallbackHandler()); // Ensures that authenticated user is the
+          new UGIClientCallbackHandler()); // Ensures that authenticated user is the
       // same as the authorized user
 
       // Make sure the TTransportFactory is performing a UGI.doAs
