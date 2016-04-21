@@ -439,41 +439,17 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
   private void login(String keytabFileKey, String keytabFile, String principalKey, String principal,
       String hostname) throws IOException {
     LOG.info(
-        " ##### ======> logging in keytabFileKey = {}, "
-            + "keytabFile = {}, principalKey = {}, principal = {}, hostname = {}",
+        "logging in keytabFileKey = {}, keytabFile = {}, principalKey = {}, principal = {}, hostname = {}",
         keytabFileKey, keytabFile, principalKey, principal, hostname);
-    // Configuration conf = new Configuration();
     org.apache.hadoop.conf.Configuration conf = new org.apache.hadoop.conf.Configuration();
     conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
     conf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
     conf.set("hadoop.security.authentication", "KERBEROS");
     conf.set(keytabFileKey, keytabFile);
     conf.set(principalKey, principal);
-    LOG.info(" ##### ======> hadoop conf = {}", conf);
-
-    LOG.info(" ##### ======> keytabFileKey = {}", conf.get(keytabFileKey));
-    LOG.info(" ##### ======> principalKey = {}", conf.get(principalKey));
-
-    // System.setProperty("java.security.krb5.conf", keytabFile);
-    // System.setProperty("java.security.auth.login.config", "/tmp/krb5Login-hadoop.conf");
-
-    // try {
-    // LoginContext lc = new LoginContext("SampleClient", new TextCallbackHandler());
-    // lc.login();
-    // UserGroupInformation.setConfiguration(conf);
-    // UserGroupInformation.loginUserFromSubject(lc.getSubject());
-    // } catch (LoginException e) {
-    // throw new IOException(e);
-    // }
 
     UserGroupInformation.setConfiguration(conf);
-    // SecurityUtil.login(conf, keytabFileKey, principalKey, hostname);
     UserGroupInformation.loginUserFromKeytab(principal, keytabFile);
-
-    // org.apache.hadoop.conf.Configuration conf = new org.apache.hadoop.conf.Configuration();
-    // conf.set(keytabFileKey, keytabFile);
-    // conf.set(principalKey, principal);
-    // SecurityUtil.login(conf, keytabFileKey, principalKey, hostname);
   }
 
   @Override

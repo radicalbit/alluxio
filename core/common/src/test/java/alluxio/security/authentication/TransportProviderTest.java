@@ -334,11 +334,22 @@ public final class TransportProviderTest {
   @Test
   public void kerberosAuthenticationTest() throws Exception {
     mConfiguration.set(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.KERBEROS.getAuthName());
-
-    // throw unsupported exception currently
-    mThrown.expect(UnsupportedOperationException.class);
-    mThrown.expectMessage("Kerberos is not supported currently.");
+    mConfiguration.set(Constants.SECURITY_AUTHENTICATION_CUSTOM_PROVIDER,
+            ExactlyMatchAuthenticationProvider.class.getName());
     mTransportProvider = TransportProvider.Factory.create(mConfiguration);
+
+    Assert.assertTrue(mTransportProvider instanceof UGITransportProvider);
+
+    // start server
+//    startServerThread();
+//
+//    TTransport client = mTransportProvider.getClientTransport(mServerAddress);
+//    client.open();
+//    Assert.assertTrue(client.isOpen());
+//
+//    // clean up
+//    client.close();
+//    mServer.stop();
   }
 
   private void startServerThread() throws Exception {
