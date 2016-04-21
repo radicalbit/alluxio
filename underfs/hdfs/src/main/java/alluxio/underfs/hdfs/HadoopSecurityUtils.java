@@ -121,7 +121,7 @@ public final class HadoopSecurityUtils {
       throws IOException {
 
     if (!isSecurityEnabled()) {
-      System.out.println("security is not enabled");
+      LOG.info("security is not enabled");
       return runner.run();
     }
 
@@ -131,9 +131,7 @@ public final class HadoopSecurityUtils {
     LOG.debug("current user {}", UserGroupInformation.getCurrentUser());
 
     if (!ugi.hasKerberosCredentials()) {
-      System.out.println("Security is enabled but no Kerberos credentials have been found. "
-              + "You may authenticate using the kinit command.");
-      LOG.error("Security is enabled but no Kerberos credentials have been found. "
+      LOG.info("Security is enabled but no Kerberos credentials have been found. "
               + "You may authenticate using the kinit command.");
     }
     try {

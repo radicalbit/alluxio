@@ -127,8 +127,6 @@ public final class LoginUser {
               .equals(AuthType.KERBEROS)) {
         if (UserGroupInformation.getCurrentUser() != null) {
 
-          System.out
-              .println("principal retrieved from UGI " + UserGroupInformation.getCurrentUser());
           LOG.info("principal retrieved from UGI " + UserGroupInformation.getCurrentUser());
 
           return new User(UserGroupInformation.getCurrentUser().getUserName());
