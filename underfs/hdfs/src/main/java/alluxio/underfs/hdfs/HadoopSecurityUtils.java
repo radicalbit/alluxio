@@ -110,6 +110,45 @@ public final class HadoopSecurityUtils {
   }
 
   /**
+   * run a method in a security context as custom user.
+   * @param runner the method to be run
+   * @param <T> the return type
+   * @param ugi the custome user
+   * @return the result of the secure method
+   * @throws IOException if something went wrong
+   */
+  public static <T> T runAs(UserGroupInformation ugi, final AlluxioSecuredRunner<T> runner)
+      throws IOException {
+
+    if (!isSecurityEnabled()) {
+      System.out.println("security is not enabled");
+      return runner.run();
+    }
+
+    UserGroupInformation.setConfiguration(sHDCONF);
+
+    LOG.debug("login user {}", UserGroupInformation.getLoginUser());
+    LOG.debug("current user {}", UserGroupInformation.getCurrentUser());
+
+    if (!ugi.hasKerberosCredentials()) {
+      System.out.println("Security is enabled but no Kerberos credentials have been found. "
+              + "You may authenticate using the kinit command.");
+      LOG.error("Security is enabled but no Kerberos credentials have been found. "
+              + "You may authenticate using the kinit command.");
+    }
+    try {
+      return ugi.doAs(new PrivilegedExceptionAction<T>() {
+        @Override
+        public T run() throws IOException {
+          return runner.run();
+        }
+      });
+    } catch (InterruptedException e) {
+      throw new IOException(e);
+    }
+  }
+
+  /**
    * interface that holds a method run.
    * @param <T> the return type of run method
    */

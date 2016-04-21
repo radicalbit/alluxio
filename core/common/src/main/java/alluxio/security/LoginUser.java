@@ -18,6 +18,7 @@ import alluxio.security.login.AppLoginModule;
 import alluxio.security.login.LoginModuleConfiguration;
 
 import org.apache.hadoop.security.HadoopKerberosName;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,6 +122,19 @@ public final class LoginUser {
       }
       return userSet.iterator().next();
     } catch (LoginException e) {
+
+      if (conf.getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class)
+              .equals(AuthType.KERBEROS)) {
+        if (UserGroupInformation.getCurrentUser() != null) {
+
+          System.out
+              .println("principal retrieved from UGI " + UserGroupInformation.getCurrentUser());
+          LOG.info("principal retrieved from UGI " + UserGroupInformation.getCurrentUser());
+
+          return new User(UserGroupInformation.getCurrentUser().getUserName());
+        }
+      }
+
       throw new IOException("Fail to login", e);
     }
   }
