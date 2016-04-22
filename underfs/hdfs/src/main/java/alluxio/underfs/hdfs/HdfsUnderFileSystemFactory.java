@@ -11,6 +11,7 @@
 
 package alluxio.underfs.hdfs;
 
+import alluxio.AlluxioURI;
 import alluxio.Configuration;
 import alluxio.underfs.UnderFileSystem;
 import alluxio.underfs.UnderFileSystemFactory;
@@ -32,12 +33,11 @@ public final class HdfsUnderFileSystemFactory implements UnderFileSystemFactory 
    * normalized to root paths because only their schemes and authorities are needed to identify
    * which {@link FileSystem} they belong to.
    */
-//  private Map<Path, HdfsUnderFileSystem> mHdfsUfsCache = Maps.newHashMap();
 
   @Override
   public UnderFileSystem create(String path, Configuration configuration, Object conf) {
     Preconditions.checkArgument(path != null, "path may not be null");
-    return new HdfsUnderFileSystem(path, configuration, conf);
+    return new HdfsUnderFileSystem(new AlluxioURI(path), configuration, conf);
   }
 
   @Override
