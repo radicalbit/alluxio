@@ -439,9 +439,8 @@ public class HdfsUnderFileSystem extends UnderFileSystem {
 
   private void login(String keytabFileKey, String keytabFile, String principalKey, String principal,
       String hostname) throws IOException {
-    LOG.info(
-        "logging in keytabFileKey = {}, keytabFile = {}, principalKey = {}, principal = {}, hostname = {}",
-        keytabFileKey, keytabFile, principalKey, principal, hostname);
+    LOG.info("logging in keytabFileKey = {}, keytabFile = {}, principalKey = {}, principal = {}, "
+        + "hostname = {}", keytabFileKey, keytabFile, principalKey, principal, hostname);
     org.apache.hadoop.conf.Configuration conf = new org.apache.hadoop.conf.Configuration();
     conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
     conf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
