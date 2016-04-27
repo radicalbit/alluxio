@@ -125,14 +125,12 @@ public final class LoginUser {
 
       if (conf.getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class)
               .equals(AuthType.KERBEROS)) {
-        if (UserGroupInformation.getCurrentUser() != null) {
+        if (UserGroupInformation.getCurrentUser() != null && UserGroupInformation.getCurrentUser().hasKerberosCredentials()) {
 
           LOG.info("principal retrieved from UGI " + UserGroupInformation.getCurrentUser());
-
           return new User(UserGroupInformation.getCurrentUser().getUserName());
         }
       }
-
       throw new IOException("Fail to login", e);
     }
   }
