@@ -124,11 +124,14 @@ public final class LoginUser {
     } catch (LoginException e) {
 
       if (conf.getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class)
-              .equals(AuthType.KERBEROS)) {
-        if (UserGroupInformation.getCurrentUser() != null && UserGroupInformation.getCurrentUser().hasKerberosCredentials()) {
+          .equals(AuthType.KERBEROS)) {
+        if (UserGroupInformation.getCurrentUser() != null
+            && UserGroupInformation.getCurrentUser().hasKerberosCredentials()) {
 
           LOG.info("principal retrieved from UGI " + UserGroupInformation.getCurrentUser());
-          return new User(UserGroupInformation.getCurrentUser().getUserName());
+          return new User(
+              new HadoopKerberosName(UserGroupInformation.getCurrentUser().getUserName())
+                  .getServiceName());
         }
       }
       throw new IOException("Fail to login", e);
