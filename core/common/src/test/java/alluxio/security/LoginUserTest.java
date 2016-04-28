@@ -13,20 +13,25 @@ package alluxio.security;
 
 import alluxio.Configuration;
 import alluxio.Constants;
+import alluxio.HadoopSecurityTestUtils;
 import alluxio.security.authentication.AuthType;
 
+import org.apache.hadoop.minikdc.KerberosSecurityTestcase;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 
 /**
  * Unit test for {@link alluxio.security.LoginUser}.
  */
-public final class LoginUserTest {
+public final class LoginUserTest extends KerberosSecurityTestcase {
 
   /**
    * The exception expected to be thrown.
@@ -155,7 +160,61 @@ public final class LoginUserTest {
     Assert.assertEquals(loginUser.getName(), System.getProperty("user.name"));
   }
 
-  // TODO(dong): getKerberosLoginUserTest()
+  /**
+   * Tests whether we can get login user with conf in KERBEROS mode, when user
+   * is not authenticated.
+   */
+  @Test
+  public void getKerberosLoginUserNotProvided() throws Exception {
+    Configuration conf = new Configuration();
+    conf.set(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.KERBEROS.getAuthName());
+
+    mThrown.expect(IOException.class);
+    mThrown.expectMessage("Fail to login");
+
+    LoginUser.get(conf);
+  }
+
+  /**
+   * Tests whether we can get login user with conf in KERBEROS mode, when user
+   * is authenticated.
+   */
+  @Test
+  public void getKerberosLoginUserProvided() throws Exception {
+
+    File keyTabDir = HadoopSecurityTestUtils.computeKeytabDir();
+
+    final String testPrincipal = "test";
+
+    final File testKeytab = new File(keyTabDir, testPrincipal + ".keytab");
+
+    getKdc().createPrincipal(testKeytab, testPrincipal);
+
+    org.apache.hadoop.conf.Configuration hConf = new org.apache.hadoop.conf.Configuration();
+    hConf.set("hadoop.security.authentication", "kerberos");
+    hConf.set("hadoop.security.auth_to_local", "RULE:[1:$1]\n" + "RULE:[2:$1]");
+    UserGroupInformation.setConfiguration(hConf);
+
+    UserGroupInformation masterUgi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(
+        HadoopSecurityTestUtils.qualifyUser(testPrincipal), testKeytab.getAbsolutePath());
+
+    HadoopSecurityTestUtils.runAs(masterUgi,
+        new HadoopSecurityTestUtils.AlluxioSecuredRunner<Void>() {
+          @Override
+          public Void run() throws IOException {
+
+            Configuration conf = new Configuration();
+            conf.set(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.KERBEROS.getAuthName());
+
+            User loginUser = LoginUser.get(conf);
+
+            Assert.assertNotNull(loginUser);
+            Assert.assertEquals(loginUser.getName(), testPrincipal);
+
+            return null;
+          }
+        });
+  }
 
   /**
    * Tests whether we can get exception when getting a login user in non-security mode.
