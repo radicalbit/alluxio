@@ -13,7 +13,6 @@ package alluxio.security.authentication;
 
 import alluxio.Configuration;
 import alluxio.Constants;
-import alluxio.util.network.NetworkAddressUtils;
 
 import org.apache.hadoop.security.HadoopKerberosName;
 import org.apache.hadoop.security.SecurityUtil;
@@ -24,7 +23,6 @@ import org.apache.thrift.transport.TSaslClientTransport;
 import org.apache.thrift.transport.TSaslServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportFactory;
-import org.apache.thrift.transport.TSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

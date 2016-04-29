@@ -339,12 +339,12 @@ public final class TransportProviderTest extends KerberosSecurityTestcase {
   public void kerberosAuthenticationTest() throws Exception {
     mConfiguration.set(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.KERBEROS.getAuthName());
     mConfiguration.set(Constants.SECURITY_AUTHENTICATION_CUSTOM_PROVIDER,
-            ExactlyMatchAuthenticationProvider.class.getName());
+        ExactlyMatchAuthenticationProvider.class.getName());
     mTransportProvider = TransportProvider.Factory.create(mConfiguration);
 
     Assert.assertTrue(mTransportProvider instanceof UGITransportProvider);
 
-    //create principal and keytab
+    // create principal and keytab
     File keyTabDir = HadoopSecurityTestUtils.computeKeytabDir();
 
     final String testPrincipal = "test";
@@ -358,28 +358,30 @@ public final class TransportProviderTest extends KerberosSecurityTestcase {
     hConf.set("hadoop.security.auth_to_local", "RULE:[1:$1]\n" + "RULE:[2:$1]");
     UserGroupInformation.setConfiguration(hConf);
 
-//    UserGroupInformation testUgi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(
-//            HadoopSecurityTestUtils.qualifyUser(testPrincipal), testKeytab.getAbsolutePath());
+    // UserGroupInformation testUgi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(
+    // HadoopSecurityTestUtils.qualifyUser(testPrincipal), testKeytab.getAbsolutePath());
 
-    //use principal and keytab for alluxio configuration
-    mConfiguration.set(Constants.MASTER_PRINCIPAL_KEY,HadoopSecurityTestUtils.qualifyUser(testPrincipal));
+    // use principal and keytab for alluxio configuration
+    mConfiguration.set(Constants.MASTER_PRINCIPAL_KEY,
+        HadoopSecurityTestUtils.qualifyUser(testPrincipal));
     mConfiguration.set(Constants.MASTER_KEYTAB_KEY, testKeytab.getAbsolutePath());
 
     startServerThread();
 
-    TTransport client = ((UGITransportProvider) mTransportProvider).getClientTransport(mServerAddress);
+    TTransport client =
+        ((UGITransportProvider) mTransportProvider).getClientTransport(mServerAddress);
 
     client.open();
     // start server
-//    startServerThread();
-//
-//    TTransport client = mTransportProvider.getClientTransport(mServerAddress);
-//    client.open();
-//    Assert.assertTrue(client.isOpen());
-//
-//    // clean up
-//    client.close();
-//    mServer.stop();
+    // startServerThread();
+    //
+    // TTransport client = mTransportProvider.getClientTransport(mServerAddress);
+    // client.open();
+    // Assert.assertTrue(client.isOpen());
+    //
+    // // clean up
+    // client.close();
+    // mServer.stop();
   }
 
   private void startServerThread() throws Exception {
