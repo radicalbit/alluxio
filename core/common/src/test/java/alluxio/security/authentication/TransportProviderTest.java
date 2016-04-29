@@ -13,8 +13,11 @@ package alluxio.security.authentication;
 
 import alluxio.Configuration;
 import alluxio.Constants;
+import alluxio.HadoopSecurityTestUtils;
 import alluxio.util.network.NetworkAddressUtils;
 
+import org.apache.hadoop.minikdc.KerberosSecurityTestcase;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
@@ -27,6 +30,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 
 import javax.security.sasl.AuthenticationException;
@@ -38,7 +42,7 @@ import javax.security.sasl.SaslException;
  * In order to test methods that return kinds of TTransport for connection in different mode, we
  * build Thrift servers and clients with specific TTransport, and let them connect.
  */
-public final class TransportProviderTest {
+public final class TransportProviderTest extends KerberosSecurityTestcase {
 
   private TThreadPoolServer mServer;
   private Configuration mConfiguration;
@@ -340,6 +344,32 @@ public final class TransportProviderTest {
 
     Assert.assertTrue(mTransportProvider instanceof UGITransportProvider);
 
+    //create principal and keytab
+    File keyTabDir = HadoopSecurityTestUtils.computeKeytabDir();
+
+    final String testPrincipal = "test";
+
+    final File testKeytab = new File(keyTabDir, testPrincipal + ".keytab");
+
+    getKdc().createPrincipal(testKeytab, testPrincipal);
+
+    org.apache.hadoop.conf.Configuration hConf = new org.apache.hadoop.conf.Configuration();
+    hConf.set("hadoop.security.authentication", "kerberos");
+    hConf.set("hadoop.security.auth_to_local", "RULE:[1:$1]\n" + "RULE:[2:$1]");
+    UserGroupInformation.setConfiguration(hConf);
+
+//    UserGroupInformation testUgi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(
+//            HadoopSecurityTestUtils.qualifyUser(testPrincipal), testKeytab.getAbsolutePath());
+
+    //use principal and keytab for alluxio configuration
+    mConfiguration.set(Constants.MASTER_PRINCIPAL_KEY,HadoopSecurityTestUtils.qualifyUser(testPrincipal));
+    mConfiguration.set(Constants.MASTER_KEYTAB_KEY, testKeytab.getAbsolutePath());
+
+    startServerThread();
+
+    TTransport client = ((UGITransportProvider) mTransportProvider).getClientTransport(mServerAddress);
+
+    client.open();
     // start server
 //    startServerThread();
 //
