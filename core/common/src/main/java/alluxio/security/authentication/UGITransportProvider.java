@@ -95,8 +95,7 @@ public final class UGITransportProvider implements TransportProvider {
         // myprincipal/my.server.com@MY.REALM
         saslProperties, // Properties set, above
         null, // callback handler - null
-        new TSocket(NetworkAddressUtils.getFqdnHost(serverAddress), serverAddress.getPort(),
-                mSocketTimeoutMs));
+        TransportProviderUtils.createThriftSocket(serverAddress, mSocketTimeoutMs));
             // transport
 
     // Make sure the transport is opened as the user we logged in as
