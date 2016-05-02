@@ -80,5 +80,4 @@ public interface TransportProvider {
    * @throws SaslException if building a TransportFactory fails
    */
   TTransportFactory getServerTransportFactory() throws SaslException;
-
 }
