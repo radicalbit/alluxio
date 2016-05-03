@@ -18,7 +18,10 @@ import alluxio.master.MasterContext;
 import alluxio.proto.journal.Journal.JournalEntry;
 import alluxio.underfs.UnderFileSystem;
 
+import alluxio.util.network.NetworkAddressUtils;
+
 import com.google.common.base.Preconditions;
+
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,13 +75,17 @@ public final class JournalWriter {
    *
    * @param journal the handle to the journal
    */
-  JournalWriter(Journal journal) {
+  JournalWriter(Journal journal) throws IOException {
     mJournal = Preconditions.checkNotNull(journal);
     mJournalDirectory = mJournal.getDirectory();
     mCompletedDirectory = mJournal.getCompletedDirectory();
     mTempCheckpointPath = mJournal.getCheckpointFilePath() + ".tmp";
     Configuration conf = MasterContext.getConf();
     mUfs = UnderFileSystem.get(mJournalDirectory, conf);
+
+    mUfs.connectFromMaster(conf,
+        NetworkAddressUtils.getConnectHost(NetworkAddressUtils.ServiceType.MASTER_RPC, conf));
+
     mMaxLogSize = conf.getBytes(Constants.MASTER_JOURNAL_LOG_SIZE_BYTES_MAX);
   }
 
