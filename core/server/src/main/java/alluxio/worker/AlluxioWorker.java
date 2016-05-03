@@ -17,6 +17,7 @@ import alluxio.ValidateConf;
 import alluxio.Version;
 import alluxio.metrics.MetricsSystem;
 import alluxio.security.authentication.TransportProvider;
+import alluxio.underfs.UnderFileSystem;
 import alluxio.util.CommonUtils;
 import alluxio.util.network.NetworkAddressUtils;
 import alluxio.util.network.NetworkAddressUtils.ServiceType;
@@ -165,6 +166,8 @@ public final class AlluxioWorker {
           mAdditionalWorkers.add(worker);
         }
       }
+
+      connectToUFS();
 
       // Setup metrics collection system
       mWorkerMetricsSystem = new MetricsSystem("worker", mConfiguration);
@@ -449,6 +452,16 @@ public final class AlluxioWorker {
       LOG.info("Usage: java AlluxioWorker");
       System.exit(-1);
     }
+  }
+
+  /*
+  FIXME mechanism for enabling sasl with hadoop token
+   */
+  private void connectToUFS() throws IOException {
+    Configuration conf = WorkerContext.getConf();
+    String ufsAddress = conf.get(Constants.UNDERFS_ADDRESS);
+    UnderFileSystem ufs = UnderFileSystem.get(ufsAddress, conf);
+    ufs.connectFromMaster(conf, NetworkAddressUtils.getConnectHost(ServiceType.WORKER_RPC, conf));
   }
 
   /**
