@@ -12,6 +12,7 @@
 package alluxio.master.journal;
 
 import javax.annotation.concurrent.ThreadSafe;
+import java.io.IOException;
 
 /**
  * The read-write journal. This allows both reads and writes to the journal.
@@ -27,8 +28,9 @@ public class ReadWriteJournal extends ReadOnlyJournal {
 
   /**
    * @return the {@link JournalWriter} for this journal
+   * @throws IOException if any error occurs
    */
-  public JournalWriter getNewWriter() {
+  public JournalWriter getNewWriter() throws IOException {
     return new JournalWriter(this);
   }
 }

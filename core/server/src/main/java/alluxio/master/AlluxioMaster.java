@@ -251,6 +251,9 @@ public class AlluxioMaster {
       if (!journalDirectory.endsWith(AlluxioURI.SEPARATOR)) {
         journalDirectory += AlluxioURI.SEPARATOR;
       }
+
+      connectToUFS();
+
       Preconditions.checkState(isJournalFormatted(journalDirectory),
           "Alluxio was not formatted! The journal folder is " + journalDirectory);
 

@@ -18,10 +18,6 @@ import alluxio.underfs.UnderFileSystemFactory;
 
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -37,30 +33,11 @@ public final class HdfsUnderFileSystemFactory implements UnderFileSystemFactory 
    * normalized to root paths because only their schemes and authorities are needed to identify
    * which {@link FileSystem} they belong to.
    */
-  private Map<Path, HdfsUnderFileSystem> mHdfsUfsCache = new HashMap<>();
 
   @Override
   public UnderFileSystem create(String path, Configuration configuration, Object conf) {
     Preconditions.checkArgument(path != null, "path may not be null");
-
-    // Normalize the path to just its root. This is all that's needed to identify which FileSystem
-    // the Path belongs to.
-    Path rootPath = getRoot(new Path(path));
-    synchronized (mHdfsUfsCache) {
-      if (!mHdfsUfsCache.containsKey(rootPath)) {
-        mHdfsUfsCache
-            .put(rootPath, new HdfsUnderFileSystem(new AlluxioURI(path), configuration, conf));
-      }
-      return mHdfsUfsCache.get(rootPath);
-    }
-  }
-
-  private static Path getRoot(Path path) {
-    Path currPath = path;
-    while (currPath.getParent() != null) {
-      currPath = currPath.getParent();
-    }
-    return currPath;
+    return new HdfsUnderFileSystem(new AlluxioURI(path), configuration, conf);
   }
 
   @Override
