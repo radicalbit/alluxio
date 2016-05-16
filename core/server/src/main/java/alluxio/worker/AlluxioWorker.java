@@ -461,7 +461,7 @@ public final class AlluxioWorker {
     Configuration conf = WorkerContext.getConf();
     String ufsAddress = conf.get(Constants.UNDERFS_ADDRESS);
     UnderFileSystem ufs = UnderFileSystem.get(ufsAddress, conf);
-    ufs.connectFromMaster(conf, NetworkAddressUtils.getConnectHost(ServiceType.WORKER_RPC, conf));
+    ufs.connectFromWorker(conf, NetworkAddressUtils.getConnectHost(ServiceType.WORKER_RPC, conf));
   }
 
   /**
