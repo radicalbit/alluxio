@@ -85,7 +85,8 @@ public final class TransportProviderTest extends KerberosSecurityTestcase {
     startServerThread();
 
     // create client and connect to server
-    TTransport client = mTransportProvider.getClientTransport(mServerAddress);
+    TTransport client = mTransportProvider.getClientTransport(mServerAddress,
+        NetworkAddressUtils.ServiceType.MASTER_RPC);
     client.open();
     Assert.assertTrue(client.isOpen());
 
@@ -107,7 +108,8 @@ public final class TransportProviderTest extends KerberosSecurityTestcase {
     startServerThread();
 
     // when connecting, authentication happens. It is a no-op in Simple mode.
-    TTransport client = mTransportProvider.getClientTransport(mServerAddress);
+    TTransport client = mTransportProvider.getClientTransport(mServerAddress,
+        NetworkAddressUtils.ServiceType.MASTER_RPC);
     client.open();
     Assert.assertTrue(client.isOpen());
 
@@ -378,7 +380,8 @@ public final class TransportProviderTest extends KerberosSecurityTestcase {
           @Override
           public Void run() throws IOException {
             try {
-              TTransport client = mTransportProvider.getClientTransport(mServerAddress);
+              TTransport client = mTransportProvider.getClientTransport(mServerAddress,
+                  NetworkAddressUtils.ServiceType.MASTER_RPC);
               client.open();
               Assert.assertTrue(client.isOpen());
               client.close();
@@ -393,7 +396,8 @@ public final class TransportProviderTest extends KerberosSecurityTestcase {
 
   private void startServerThread() throws Exception {
     // create args and use them to build a Thrift TServer
-    TTransportFactory tTransportFactory = mTransportProvider.getServerTransportFactory();
+    TTransportFactory tTransportFactory =
+        mTransportProvider.getServerTransportFactory(NetworkAddressUtils.ServiceType.MASTER_RPC);
 
     mServer = new TThreadPoolServer(
         new TThreadPoolServer.Args(mServerTSocket).maxWorkerThreads(2).minWorkerThreads(1)

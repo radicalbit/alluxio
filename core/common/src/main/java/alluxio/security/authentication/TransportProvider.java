@@ -14,6 +14,8 @@ package alluxio.security.authentication;
 import alluxio.Configuration;
 import alluxio.Constants;
 
+import alluxio.util.network.NetworkAddressUtils;
+
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportFactory;
 
@@ -66,18 +68,22 @@ public interface TransportProvider {
    * {@link UnsupportedOperationException} is thrown.
    *
    * @param serverAddress the server address which clients will connect to
+   * @param serviceType the service type to be used
    * @return a TTransport for client
    * @throws IOException if building a TransportFactory fails or user login fails
    */
-  TTransport getClientTransport(InetSocketAddress serverAddress) throws IOException;
+  TTransport getClientTransport(InetSocketAddress serverAddress,
+      NetworkAddressUtils.ServiceType serviceType) throws IOException;
 
   /**
    * For server side, this method returns a {@link TTransportFactory} based on the auth type. It is
    * used as one argument to build a Thrift {@link org.apache.thrift.server.TServer}. If the auth
    * type is not supported or recognized, an {@link UnsupportedOperationException} is thrown.
    *
+   * @param serviceType the service type to be used
    * @return a corresponding TTransportFactory
    * @throws SaslException if building a TransportFactory fails
    */
-  TTransportFactory getServerTransportFactory() throws SaslException;
+  TTransportFactory getServerTransportFactory(NetworkAddressUtils.ServiceType serviceType)
+      throws SaslException;
 }

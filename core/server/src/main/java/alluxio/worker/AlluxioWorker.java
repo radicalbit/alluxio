@@ -411,7 +411,7 @@ public final class AlluxioWorker {
     // Return a TTransportFactory based on the authentication type
     TTransportFactory tTransportFactory;
     try {
-      tTransportFactory = mTransportProvider.getServerTransportFactory();
+      tTransportFactory = mTransportProvider.getServerTransportFactory(ServiceType.WORKER_RPC);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

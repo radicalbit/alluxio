@@ -14,6 +14,8 @@ package alluxio.security.authentication;
 import alluxio.Configuration;
 import alluxio.Constants;
 
+import alluxio.util.network.NetworkAddressUtils;
+
 import org.apache.hadoop.security.HadoopKerberosName;
 import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -38,8 +40,8 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 
 /**
- * If authentication type is {@link AuthType#SIMPLE} or {@link AuthType#CUSTOM}, this is the default
- * transport provider which uses Sasl transport.
+ * If authentication type is {@link AuthType#KERBEROS}, this is the transport provider which uses
+ * Sasl transport with Kerberos.
  */
 @ThreadSafe
 public final class UGITransportProvider implements TransportProvider {
@@ -65,10 +67,25 @@ public final class UGITransportProvider implements TransportProvider {
   }
 
   @Override
-  public TTransport getClientTransport(InetSocketAddress serverAddress) throws IOException {
-    String masterPrincipal = mConfiguration.get(Constants.MASTER_PRINCIPAL_KEY);
+  public TTransport getClientTransport(InetSocketAddress serverAddress,
+      NetworkAddressUtils.ServiceType serviceType) throws IOException {
 
-    String principal = SecurityUtil.getServerPrincipal(masterPrincipal,
+    String principalName;
+
+    switch (serviceType) {
+      case MASTER_RPC: {
+        principalName = mConfiguration.get(Constants.MASTER_PRINCIPAL_KEY);
+        break;
+      }
+      case WORKER_RPC: {
+        principalName = mConfiguration.get(Constants.WORKER_PRINCIPAL_KEY);
+        break;
+      }
+      default:
+        throw new SaslException("invalid serviceType");
+    }
+
+    String principal = SecurityUtil.getServerPrincipal(principalName,
         InetAddress.getLocalHost().getCanonicalHostName());
     HadoopKerberosName name = new HadoopKerberosName(principal);
     String primary = name.getServiceName();
@@ -94,39 +111,33 @@ public final class UGITransportProvider implements TransportProvider {
         saslProperties, // Properties set, above
         null, // callback handler - null
         TransportProviderUtils.createThriftSocket(serverAddress, mSocketTimeoutMs));
-            // transport
+    // transport
 
     // Make sure the transport is opened as the user we logged in as
     return new TUGIAssumingTransport(saslTransport, currentUser);
   }
 
-  // // TODO(binfan): make this private and use whitebox to access this method in test
-  // /**
-  // * Gets a PLAIN mechanism transport for client side.
-  // *
-  // * @param username User Name of PlainClient
-  // * @param password Password of PlainClient
-  // * @param serverAddress Address of the server
-  // * @return Wrapped transport with PLAIN mechanism
-  // * @throws SaslException if an AuthenticationProvider is not found
-  // */
-  // public TTransport getClientTransport(String username, String password,
-  // InetSocketAddress serverAddress) throws SaslException {
-  // TTransport wrappedTransport =
-  // TransportProviderUtils.createThriftSocket(serverAddress, mSocketTimeoutMs);
-  // return new TSaslClientTransport(PlainSaslServerProvider.MECHANISM, null, null, null,
-  // new HashMap<String, String>(), new PlainSaslClientCallbackHandler(username, password),
-  // wrappedTransport);
-  // }
-
   @Override
-  public TTransportFactory getServerTransportFactory() throws SaslException {
-
+  public TTransportFactory getServerTransportFactory(NetworkAddressUtils.ServiceType serviceType)
+      throws SaslException {
     try {
 
-      String masterPrincipal = mConfiguration.get(Constants.MASTER_PRINCIPAL_KEY);
+      String principalName;
 
-      String principal = SecurityUtil.getServerPrincipal(masterPrincipal,
+      switch (serviceType) {
+        case MASTER_RPC: {
+          principalName = mConfiguration.get(Constants.MASTER_PRINCIPAL_KEY);
+          break;
+        }
+        case WORKER_RPC: {
+          principalName = mConfiguration.get(Constants.WORKER_PRINCIPAL_KEY);
+          break;
+        }
+        default:
+          throw new SaslException("invalid serviceType");
+      }
+
+      String principal = SecurityUtil.getServerPrincipal(principalName,
           InetAddress.getLocalHost().getCanonicalHostName());
       HadoopKerberosName name = new HadoopKerberosName(principal);
       String primary = name.getServiceName();

@@ -21,7 +21,10 @@ import alluxio.thrift.AlluxioService;
 import alluxio.thrift.AlluxioTException;
 import alluxio.thrift.ThriftIOException;
 
+import alluxio.util.network.NetworkAddressUtils;
+
 import com.google.common.base.Preconditions;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TMultiplexedProtocol;
@@ -166,7 +169,8 @@ public abstract class AbstractClient implements Closeable {
               getServiceName(), mMode, mAddress);
 
       TProtocol binaryProtocol =
-          new TBinaryProtocol(mTransportProvider.getClientTransport(mAddress));
+          new TBinaryProtocol(mTransportProvider.getClientTransport(mAddress,
+              NetworkAddressUtils.ServiceType.MASTER_RPC));
       mProtocol = new TMultiplexedProtocol(binaryProtocol, getServiceName());
       try {
         mProtocol.getTransport().open();

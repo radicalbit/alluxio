@@ -15,7 +15,10 @@ import alluxio.Configuration;
 import alluxio.Constants;
 import alluxio.security.LoginUser;
 
+import alluxio.util.network.NetworkAddressUtils;
+
 import com.google.common.base.Preconditions;
+
 import org.apache.thrift.transport.TSaslClientTransport;
 import org.apache.thrift.transport.TSaslServerTransport;
 import org.apache.thrift.transport.TTransport;
@@ -55,7 +58,8 @@ public final class PlainSaslTransportProvider implements TransportProvider {
   }
 
   @Override
-  public TTransport getClientTransport(InetSocketAddress serverAddress) throws IOException {
+  public TTransport getClientTransport(InetSocketAddress serverAddress,
+      NetworkAddressUtils.ServiceType serviceType) throws IOException {
     String username = LoginUser.get(mConfiguration).getName();
     String password = "noPassword";
     return getClientTransport(username, password, serverAddress);
@@ -81,7 +85,8 @@ public final class PlainSaslTransportProvider implements TransportProvider {
   }
 
   @Override
-  public TTransportFactory getServerTransportFactory() throws SaslException {
+  public TTransportFactory getServerTransportFactory(NetworkAddressUtils.ServiceType serviceType)
+      throws SaslException {
     AuthType authType =
         mConfiguration.getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class);
     TSaslServerTransport.Factory saslFactory = new TSaslServerTransport.Factory();

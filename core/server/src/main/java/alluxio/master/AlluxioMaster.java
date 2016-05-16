@@ -489,7 +489,7 @@ public class AlluxioMaster {
     // Return a TTransportFactory based on the authentication type
     TTransportFactory transportFactory;
     try {
-      transportFactory = mTransportProvider.getServerTransportFactory();
+      transportFactory = mTransportProvider.getServerTransportFactory(ServiceType.MASTER_RPC);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

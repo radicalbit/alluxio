@@ -14,7 +14,10 @@ package alluxio.security.authentication;
 import alluxio.Configuration;
 import alluxio.Constants;
 
+import alluxio.util.network.NetworkAddressUtils;
+
 import com.google.common.base.Preconditions;
+
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportFactory;
@@ -44,14 +47,16 @@ public final class NoSaslTransportProvider implements TransportProvider {
   }
 
   @Override
-  public TTransport getClientTransport(InetSocketAddress serverAddress) {
+  public TTransport getClientTransport(InetSocketAddress serverAddress,
+      NetworkAddressUtils.ServiceType serviceType) {
     TTransport tTransport =
         TransportProviderUtils.createThriftSocket(serverAddress, mSocketTimeoutMs);
     return new TFramedTransport(tTransport);
   }
 
   @Override
-  public TTransportFactory getServerTransportFactory() throws SaslException {
+  public TTransportFactory getServerTransportFactory(NetworkAddressUtils.ServiceType serviceType)
+      throws SaslException {
     return new TFramedTransport.Factory();
   }
 }

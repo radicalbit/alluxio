@@ -31,6 +31,7 @@ import alluxio.wire.WorkerNetAddress;
 import alluxio.worker.ClientMetrics;
 
 import com.google.common.base.Preconditions;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TMultiplexedProtocol;
@@ -210,7 +211,8 @@ public final class BlockWorkerClient extends AbstractClient {
       LOG.info("Connecting to {} worker @ {}", (mIsLocal ? "local" : "remote"), mAddress);
 
       TProtocol binaryProtocol =
-          new TBinaryProtocol(mTransportProvider.getClientTransport(mAddress));
+          new TBinaryProtocol(mTransportProvider.getClientTransport(mAddress,
+              NetworkAddressUtils.ServiceType.WORKER_RPC));
       mProtocol = new TMultiplexedProtocol(binaryProtocol, getServiceName());
       mClient = new BlockWorkerClientService.Client(mProtocol);
 
