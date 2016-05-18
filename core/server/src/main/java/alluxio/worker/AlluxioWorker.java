@@ -16,6 +16,7 @@ import alluxio.Constants;
 import alluxio.ValidateConf;
 import alluxio.Version;
 import alluxio.metrics.MetricsSystem;
+import alluxio.security.authentication.TUGIAssumingProcessor;
 import alluxio.security.authentication.TransportProvider;
 import alluxio.underfs.UnderFileSystem;
 import alluxio.util.CommonUtils;
@@ -407,6 +408,8 @@ public final class AlluxioWorker {
     for (Worker worker: mAdditionalWorkers) {
       registerServices(processor, worker.getServices());
     }
+
+    TUGIAssumingProcessor ugiProcessor = new TUGIAssumingProcessor(processor);
 
     // Return a TTransportFactory based on the authentication type
     TTransportFactory tTransportFactory;

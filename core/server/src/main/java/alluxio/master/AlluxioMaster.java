@@ -21,6 +21,7 @@ import alluxio.master.file.FileSystemMaster;
 import alluxio.master.journal.ReadWriteJournal;
 import alluxio.master.lineage.LineageMaster;
 import alluxio.metrics.MetricsSystem;
+import alluxio.security.authentication.TUGIAssumingProcessor;
 import alluxio.security.authentication.TransportProvider;
 import alluxio.underfs.UnderFileSystem;
 import alluxio.util.LineageUtils;
@@ -486,6 +487,8 @@ public class AlluxioMaster {
       registerServices(processor, master.getServices());
     }
 
+    TUGIAssumingProcessor ugiProcessor = new TUGIAssumingProcessor(processor);
+
     // Return a TTransportFactory based on the authentication type
     TTransportFactory transportFactory;
     try {
@@ -496,7 +499,8 @@ public class AlluxioMaster {
 
     // create master thrift service with the multiplexed processor.
     Args args = new TThreadPoolServer.Args(mTServerSocket).maxWorkerThreads(mMaxWorkerThreads)
-        .minWorkerThreads(mMinWorkerThreads).processor(processor).transportFactory(transportFactory)
+        .minWorkerThreads(mMinWorkerThreads).processor(ugiProcessor)
+        .transportFactory(transportFactory)
         .protocolFactory(new TBinaryProtocol.Factory(true, true));
     if (MasterContext.getConf().getBoolean(Constants.IN_TEST_MODE)) {
       args.stopTimeoutVal = 0;
