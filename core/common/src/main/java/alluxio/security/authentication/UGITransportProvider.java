@@ -31,11 +31,13 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.security.AccessController;
 import java.security.Security;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.concurrent.ThreadSafe;
+import javax.security.auth.Subject;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 
@@ -96,6 +98,13 @@ public final class UGITransportProvider implements TransportProvider {
     Map<String, String> saslProperties = new HashMap<String, String>();
     // Use authorization and confidentiality
     saslProperties.put(Sasl.QOP, "auth-conf");
+
+    Subject subject = Subject.getSubject(AccessController.getContext());
+
+    if (subject != null) {
+      LOG.info("Current subject: {}", subject);
+      LOG.info("Current ugi from subject: {}", UserGroupInformation.getUGIFromSubject(subject));
+    }
 
     UserGroupInformation currentUser = UserGroupInformation.getCurrentUser();
 
