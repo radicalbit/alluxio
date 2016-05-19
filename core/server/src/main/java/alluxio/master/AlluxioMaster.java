@@ -21,6 +21,7 @@ import alluxio.master.file.FileSystemMaster;
 import alluxio.master.journal.ReadWriteJournal;
 import alluxio.master.lineage.LineageMaster;
 import alluxio.metrics.MetricsSystem;
+import alluxio.security.authentication.AuthType;
 import alluxio.security.authentication.TUGIAssumingProcessor;
 import alluxio.security.authentication.TransportProvider;
 import alluxio.underfs.UnderFileSystem;
@@ -476,18 +477,20 @@ public class AlluxioMaster {
 
   protected void startServingRPCServer() {
     // set up multiplexed thrift processors
-    TMultiplexedProcessor processor = new TMultiplexedProcessor();
-    registerServices(processor, mBlockMaster.getServices());
-    registerServices(processor, mFileSystemMaster.getServices());
+    TMultiplexedProcessor multiplexedProcessor = new TMultiplexedProcessor();
+    registerServices(multiplexedProcessor, mBlockMaster.getServices());
+    registerServices(multiplexedProcessor, mFileSystemMaster.getServices());
     if (LineageUtils.isLineageEnabled(MasterContext.getConf())) {
-      registerServices(processor, mLineageMaster.getServices());
+      registerServices(multiplexedProcessor, mLineageMaster.getServices());
     }
     // register additional masters for RPC service
     for (Master master : mAdditionalMasters) {
-      registerServices(processor, master.getServices());
+      registerServices(multiplexedProcessor, master.getServices());
     }
 
-    TUGIAssumingProcessor ugiProcessor = new TUGIAssumingProcessor(processor);
+    TProcessor processor = MasterContext.getConf()
+        .getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class).equals(AuthType.KERBEROS)
+            ? new TUGIAssumingProcessor(multiplexedProcessor) : multiplexedProcessor; 
 
     // Return a TTransportFactory based on the authentication type
     TTransportFactory transportFactory;
@@ -497,9 +500,9 @@ public class AlluxioMaster {
       throw Throwables.propagate(e);
     }
 
-    // create master thrift service with the multiplexed processor.
+    // create master thrift service with the multiplexed multiplexedProcessor.
     Args args = new TThreadPoolServer.Args(mTServerSocket).maxWorkerThreads(mMaxWorkerThreads)
-        .minWorkerThreads(mMinWorkerThreads).processor(ugiProcessor)
+        .minWorkerThreads(mMinWorkerThreads).processor(processor)
         .transportFactory(transportFactory)
         .protocolFactory(new TBinaryProtocol.Factory(true, true));
     if (MasterContext.getConf().getBoolean(Constants.IN_TEST_MODE)) {

@@ -15,7 +15,9 @@ import alluxio.Configuration;
 import alluxio.Constants;
 import alluxio.ValidateConf;
 import alluxio.Version;
+import alluxio.master.MasterContext;
 import alluxio.metrics.MetricsSystem;
+import alluxio.security.authentication.AuthType;
 import alluxio.security.authentication.TUGIAssumingProcessor;
 import alluxio.security.authentication.TransportProvider;
 import alluxio.underfs.UnderFileSystem;
@@ -400,16 +402,18 @@ public final class AlluxioWorker {
   private TThreadPoolServer createThriftServer() {
     int minWorkerThreads = mConfiguration.getInt(Constants.WORKER_WORKER_BLOCK_THREADS_MIN);
     int maxWorkerThreads = mConfiguration.getInt(Constants.WORKER_WORKER_BLOCK_THREADS_MAX);
-    TMultiplexedProcessor processor = new TMultiplexedProcessor();
+    TMultiplexedProcessor multiplexedProcessor = new TMultiplexedProcessor();
 
-    registerServices(processor, mBlockWorker.getServices());
-    registerServices(processor, mFileSystemWorker.getServices());
+    registerServices(multiplexedProcessor, mBlockWorker.getServices());
+    registerServices(multiplexedProcessor, mFileSystemWorker.getServices());
     // register additional workers for RPC service
     for (Worker worker: mAdditionalWorkers) {
-      registerServices(processor, worker.getServices());
+      registerServices(multiplexedProcessor, worker.getServices());
     }
 
-    TUGIAssumingProcessor ugiProcessor = new TUGIAssumingProcessor(processor);
+    TProcessor processor = WorkerContext.getConf()
+            .getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class).equals(AuthType.KERBEROS)
+            ? new TUGIAssumingProcessor(multiplexedProcessor) : multiplexedProcessor;
 
     // Return a TTransportFactory based on the authentication type
     TTransportFactory tTransportFactory;
