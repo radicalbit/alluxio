@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -37,6 +37,9 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
 * Unit test for functionality in {@link BaseFileSystem}.
@@ -208,6 +211,22 @@ public final class BaseFileSystemTest {
   }
 
   /**
+   * Tests for the {@link BaseFileSystem#listStatus(AlluxioURI, ListStatusOptions)} method.
+   *
+   * @throws Exception when listing the status fails
+   */
+  @Test
+  public void listStatusTest() throws Exception {
+    AlluxioURI file = new AlluxioURI("/file");
+    List<URIStatus> infos = new ArrayList<>();
+    infos.add(new URIStatus(new FileInfo()));
+    ListStatusOptions listStatusOptions = ListStatusOptions.defaults();
+    Mockito.when(mFileSystemMasterClient.listStatus(file, listStatusOptions)).thenReturn(infos);
+    Assert.assertSame(infos, mFileSystem.listStatus(file, listStatusOptions));
+    Mockito.verify(mFileSystemMasterClient).listStatus(file, listStatusOptions);
+  }
+
+  /**
    * Ensures that an exception is propagated correctly when listing the status.
    *
    * @throws Exception when listing the status fails
@@ -215,7 +234,8 @@ public final class BaseFileSystemTest {
   @Test
   public void listStatusExceptionTest() throws Exception {
     AlluxioURI file = new AlluxioURI("/file");
-    Mockito.when(mFileSystemMasterClient.listStatus(file)).thenThrow(EXCEPTION);
+    Mockito.when(mFileSystemMasterClient.listStatus(file, ListStatusOptions.defaults()))
+        .thenThrow(EXCEPTION);
     ListStatusOptions listStatusOptions = ListStatusOptions.defaults();
     try {
       mFileSystem.listStatus(file, listStatusOptions);

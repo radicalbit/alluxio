@@ -15,7 +15,12 @@ First, the Alluxio binaries must be on your machine. You can either
 [compile Alluxio](Building-Alluxio-Master-Branch.html), or
 [download the binaries locally](Running-Alluxio-Locally.html).
 
-Then, if you haven't already done so, create your configuration file from the template:
+Then, if you haven't already done so, create your configuration file with `bootstrap-conf` command.
+For example, if you are running Alluxio on your local machine, `ALLUXIO_MASTER_HOSTNAME` should be set to `localhost`
+
+{% include Configuring-Alluxio-with-S3/bootstrap-conf.md %}
+
+Alternatively, you can also create the configuration file from the template and set the contents manually. 
 
 {% include Common-Commands/copy-alluxio-env.md %}
 
@@ -33,8 +38,7 @@ to include:
 
 {% include Configuring-Alluxio-with-S3/underfs-address.md %}
 
-Next, you need to specify the AWS credentials for S3 access. In the `ALLUXIO_JAVA_OPTS` section of
-the `conf/alluxio-env.sh` file, add:
+Next, you need to specify the AWS credentials for S3 access. In `conf/alluxio-env.sh`, add:
 
 {% include Configuring-Alluxio-with-S3/aws.md %}
 
@@ -78,7 +82,13 @@ These configuration parameters may also need to be set for the Alluxio client if
 a separate JVM from the Alluxio Master and Workers. See
 [Configuring Distributed Applications](#configuring-distributed-applications)
 
-# Configuring Your Application
+## Enabling S3 server side encryption
+To enable S3 [server side encryption](http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingServerSideEncryption.html),
+modify the `ALLUXIO_JAVA_OPTS` section of `conf/alluxio-env.sh` to include:
+
+{% include Configuring-Alluxio-with-S3/server-side-encryption.md %}
+
+# Configuring Application Dependency
 
 When building your application to use Alluxio, your application will have to include the
 `alluxio-core-client` module. If you are using [maven](https://maven.apache.org/), you can add the
@@ -125,9 +135,10 @@ you replace `<USE_HTTPS>` with `false` (using HTTP) also replace `<HTTP_PORT>` w
 the provider, and remove the `alluxio.underfs.s3.endpoint.https.port` parameter. If the HTTP or HTTPS
 port values are left unset, `<HTTP_PORT>` defaults to port 80, and `<HTTPS_PORT>` defaults to port 443.
 
-## Configuring Distributed Applications
-
-If you are using an Alluxio client that is running separately from the Alluxio Master and Workers (in
+## Configuring Distributed Applications Runtime
+When I/O is delegated to Alluxio workers (i.e., Alluxio configuration `alluxio.user.ufs.operation.delegation` is true, 
+which is by default since Alluxio 1.1), you do not have to do any thing special for your applications.
+Otherwise since you are using an Alluxio client that is running separately from the Alluxio Master and Workers (in
 a separate JVM), then you need to make sure that your AWS credentials are provided to the
 application JVM processes as well. The easiest way to do this is to add them as command line options
 when starting your client JVM process. For example:

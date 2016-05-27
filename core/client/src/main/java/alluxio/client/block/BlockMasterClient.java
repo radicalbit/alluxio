@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -84,7 +84,7 @@ public final class BlockMasterClient extends AbstractMasterClient {
     return retryRPC(new RpcCallable<List<WorkerInfo>>() {
       @Override
       public List<WorkerInfo> call() throws TException {
-        List<WorkerInfo> result = new ArrayList<WorkerInfo>();
+        List<WorkerInfo> result = new ArrayList<>();
         for (alluxio.thrift.WorkerInfo workerInfo : mClient.getWorkerInfoList()) {
           result.add(ThriftUtils.fromThrift(workerInfo));
         }

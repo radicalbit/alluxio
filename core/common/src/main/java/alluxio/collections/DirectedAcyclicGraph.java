@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -53,7 +53,7 @@ public class DirectedAcyclicGraph<T> {
     Preconditions.checkState(!contains(payload), "the payload already exists in the DAG");
 
     // construct the new node
-    DirectedAcyclicGraphNode<T> newNode = new DirectedAcyclicGraphNode<T>(payload);
+    DirectedAcyclicGraphNode<T> newNode = new DirectedAcyclicGraphNode<>(payload);
     mIndex.put(payload, newNode);
 
     if (parents.isEmpty()) {
@@ -177,8 +177,7 @@ public class DirectedAcyclicGraph<T> {
     List<T> result = new ArrayList<>();
 
     Set<T> input = new HashSet<>(payloads);
-    Deque<DirectedAcyclicGraphNode<T>> toVisit =
-        new ArrayDeque<DirectedAcyclicGraphNode<T>>(mRoots);
+    Deque<DirectedAcyclicGraphNode<T>> toVisit = new ArrayDeque<>(mRoots);
     while (!toVisit.isEmpty()) {
       DirectedAcyclicGraphNode<T> visit = toVisit.removeFirst();
       T payload = visit.getPayload();
@@ -188,7 +187,7 @@ public class DirectedAcyclicGraph<T> {
       toVisit.addAll(visit.getChildren());
     }
 
-    Preconditions.checkState(toVisit.isEmpty(), "Not all the given payloads are in the DAG: ",
+    Preconditions.checkState(input.isEmpty(), "Not all the given payloads are in the DAG: ",
         input);
     return result;
   }
@@ -196,7 +195,7 @@ public class DirectedAcyclicGraph<T> {
   /**
    * Gets all payloads of the DAG in the topological order.
    *
-   * @return the payloads of all the nodes in toplogical order
+   * @return the payloads of all the nodes in topological order
    */
   public List<T> getAllInTopologicalOrder() {
     return sortTopologically(mIndex.keySet());

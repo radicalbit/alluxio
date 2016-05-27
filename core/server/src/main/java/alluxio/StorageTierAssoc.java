@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -42,7 +42,7 @@ public abstract class StorageTierAssoc {
    */
   protected StorageTierAssoc(Configuration conf, String levelsProperty, String aliasFormat) {
     int levels = conf.getInt(levelsProperty);
-    ImmutableBiMap.Builder<String, Integer> builder = new ImmutableBiMap.Builder<String, Integer>();
+    ImmutableBiMap.Builder<String, Integer> builder = new ImmutableBiMap.Builder<>();
     for (int i = 0; i < levels; i++) {
       String alias = conf.get(String.format(aliasFormat, i));
       builder.put(alias, i);
@@ -57,7 +57,7 @@ public abstract class StorageTierAssoc {
    * @param storageTierAliases the list of aliases
    */
   protected StorageTierAssoc(List<String> storageTierAliases) {
-    ImmutableBiMap.Builder<String, Integer> builder = new ImmutableBiMap.Builder<String, Integer>();
+    ImmutableBiMap.Builder<String, Integer> builder = new ImmutableBiMap.Builder<>();
     for (int ordinal = 0; ordinal < storageTierAliases.size(); ordinal++) {
       builder.put(storageTierAliases.get(ordinal), ordinal);
     }
@@ -92,7 +92,7 @@ public abstract class StorageTierAssoc {
    */
   public List<String> getOrderedStorageAliases() {
     int size = size();
-    List<String> ret = new ArrayList<String>(size);
+    List<String> ret = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       ret.add(getAlias(i));
     }

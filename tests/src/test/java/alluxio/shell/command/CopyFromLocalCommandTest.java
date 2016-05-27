@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -307,7 +307,7 @@ public class CopyFromLocalCommandTest extends AbstractAlluxioShellTest {
   @Test
   public void copyFromLocalTestWithFullURI() throws IOException, AlluxioException {
     File testFile = generateFileContent("/srcFileURI", BufferUtils.getIncreasingByteArray(10));
-    String alluxioURI = "alluxio://" + mLocalAlluxioCluster.getMasterHostname() + ":"
+    String alluxioURI = "alluxio://" + mLocalAlluxioCluster.getHostname() + ":"
         + mLocalAlluxioCluster.getMasterPort() + "/destFileURI";
     // when
     mFsShell.run("copyFromLocal", testFile.getPath(), alluxioURI);

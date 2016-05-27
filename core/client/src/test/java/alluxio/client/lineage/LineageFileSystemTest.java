@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -41,8 +41,6 @@ public final class LineageFileSystemTest {
   private LineageContext mLineageContext;
   private LineageMasterClient mLineageMasterClient;
   private LineageFileSystem mAlluxioLineageFileSystem;
-  private FileSystemContext mFileSystemContext;
-  private FileSystemMasterClient mFileSystemMasterClient;
 
   /**
    * Sets up all dependencies before running a test.
@@ -55,11 +53,12 @@ public final class LineageFileSystemTest {
     Whitebox.setInternalState(LineageContext.class, "INSTANCE", mLineageContext);
     mAlluxioLineageFileSystem = LineageFileSystem.get();
     Whitebox.setInternalState(mAlluxioLineageFileSystem, "mLineageContext", mLineageContext);
-    mFileSystemContext = PowerMockito.mock(FileSystemContext.class);
-    mFileSystemMasterClient = PowerMockito.mock(FileSystemMasterClient.class);
-    Mockito.when(mFileSystemContext.acquireMasterClient()).thenReturn(mFileSystemMasterClient);
-    Whitebox.setInternalState(FileSystemContext.class, "INSTANCE", mFileSystemContext);
-    Whitebox.setInternalState(mAlluxioLineageFileSystem, "mContext", mFileSystemContext);
+    FileSystemContext fileSystemContext = PowerMockito.mock(FileSystemContext.class);
+    FileSystemMasterClient fileSystemMasterClient =
+        PowerMockito.mock(FileSystemMasterClient.class);
+    Mockito.when(fileSystemContext.acquireMasterClient()).thenReturn(fileSystemMasterClient);
+    Whitebox.setInternalState(FileSystemContext.class, "INSTANCE", fileSystemContext);
+    Whitebox.setInternalState(mAlluxioLineageFileSystem, "mContext", fileSystemContext);
   }
 
   /**

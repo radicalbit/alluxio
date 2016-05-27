@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -255,13 +255,7 @@ public final class KeyValueMaster extends AbstractMaster {
       // This should be impossible since we pass the recursive option into mkdir
       throw Throwables.propagate(e);
     }
-    long fileId;
-    try {
-      fileId = mFileSystemMaster.getFileId(path);
-    } catch (FileDoesNotExistException e) {
-      // This is unexpected since we just successfully created this directory
-      throw Throwables.propagate(e);
-    }
+    long fileId = mFileSystemMaster.getFileId(path);
     Preconditions.checkState(fileId != IdUtils.INVALID_FILE_ID);
 
     createStoreInternal(fileId);

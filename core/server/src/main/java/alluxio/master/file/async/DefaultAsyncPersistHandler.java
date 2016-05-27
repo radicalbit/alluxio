@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -15,7 +15,6 @@ import alluxio.AlluxioURI;
 import alluxio.Constants;
 import alluxio.exception.AccessControlException;
 import alluxio.exception.AlluxioException;
-import alluxio.exception.FailedToCheckpointException;
 import alluxio.exception.FileDoesNotExistException;
 import alluxio.exception.InvalidPathException;
 import alluxio.master.file.FileSystemMaster;
@@ -25,6 +24,7 @@ import alluxio.util.IdUtils;
 import alluxio.wire.BlockLocation;
 import alluxio.wire.FileBlockInfo;
 import alluxio.wire.FileInfo;
+import alluxio.wire.WorkerInfo;
 
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
@@ -35,10 +35,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 /**
- * The default handler for async persistence that schedules the the persistence on the workers that
+ * The default handler for async persistence that schedules the persistence on the workers that
  * contains all the blocks of a given file, and the handler returns the scheduled request whenever
  * the corresponding worker polls.
  */
@@ -67,8 +68,8 @@ public class DefaultAsyncPersistHandler implements AsyncPersistHandler {
     long workerId = getWorkerStoringFile(path);
 
     if (workerId == IdUtils.INVALID_WORKER_ID) {
-      throw new FailedToCheckpointException(
-          "No worker found to schedule async persistence for file " + path);
+      LOG.error("No worker found to schedule async persistence for file " + path);
+      return;
     }
 
     if (!mWorkerToAsyncPersistFiles.containsKey(workerId)) {
@@ -88,6 +89,19 @@ public class DefaultAsyncPersistHandler implements AsyncPersistHandler {
   // TODO(calvin): Propagate the exceptions in certain cases
   private long getWorkerStoringFile(AlluxioURI path)
       throws FileDoesNotExistException, AccessControlException {
+    long fileId = mFileSystemMasterView.getFileId(path);
+    if (mFileSystemMasterView.getFileInfo(fileId).getLength() == 0) {
+      // if file is empty, return any worker
+      List<WorkerInfo> workerInfoList = mFileSystemMasterView.getWorkerInfoList();
+      if (workerInfoList.isEmpty()) {
+        LOG.error("No worker is available");
+        return IdUtils.INVALID_WORKER_ID;
+      }
+      // randomly pick a worker
+      int index = new Random().nextInt(workerInfoList.size());
+      return workerInfoList.get(index).getId();
+    }
+
     Map<Long, Integer> workerBlockCounts = new HashMap<>();
     List<FileBlockInfo> blockInfoList;
     try {

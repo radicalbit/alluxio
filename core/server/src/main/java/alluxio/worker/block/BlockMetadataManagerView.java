@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -48,16 +48,16 @@ public class BlockMetadataManagerView {
    * A list of {@link StorageTierView}, derived from {@link StorageTier}s from the
    * {@link BlockMetadataManager}.
    */
-  private List<StorageTierView> mTierViews = new ArrayList<StorageTierView>();
+  private List<StorageTierView> mTierViews = new ArrayList<>();
 
   /** A list of pinned inodes. */
-  private final Set<Long> mPinnedInodes = new HashSet<Long>();
+  private final Set<Long> mPinnedInodes = new HashSet<>();
 
   /** Indices of locks that are being used. */
   private final Set<Long> mInUseBlocks = new HashSet<>();
 
   /** A map from tier alias to {@link StorageTierView}. */
-  private Map<String, StorageTierView> mAliasToTierViews = new HashMap<String, StorageTierView>();
+  private Map<String, StorageTierView> mAliasToTierViews = new HashMap<>();
 
   /**
    * Creates a new instance of {@link BlockMetadataManagerView}. Now we always create a new view

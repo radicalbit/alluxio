@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -11,7 +11,7 @@
 
 package alluxio.mesos;
 
-import alluxio.Format;
+import alluxio.cli.Format;
 import alluxio.underfs.UnderFileSystemRegistry;
 import alluxio.worker.AlluxioWorker;
 
@@ -28,6 +28,12 @@ import javax.annotation.concurrent.ThreadSafe;
  */
 @ThreadSafe
 public class AlluxioWorkerExecutor implements Executor {
+
+  /**
+   * Creates a new {@link AlluxioWorkerExecutor}.
+   */
+  public AlluxioWorkerExecutor() {}
+
   @Override
   public void disconnected(ExecutorDriver driver) {
     System.out.println("Executor has disconnected from the Mesos slave.");

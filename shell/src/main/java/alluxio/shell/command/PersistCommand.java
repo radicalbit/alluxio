@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -28,7 +28,7 @@ import java.util.List;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * Persists a file or directory currently stored only in Alluxio to the UnderFileSystem.
+ * Persists files or directories currently stored only in Alluxio to the UnderFileSystem.
  */
 @ThreadSafe
 public final class PersistCommand extends AbstractShellCommand {
@@ -52,10 +52,21 @@ public final class PersistCommand extends AbstractShellCommand {
   }
 
   @Override
+  public boolean validateArgs(String... args) {
+    boolean valid = args.length >= getNumOfArgs();
+    if (!valid) {
+      System.out.println(getCommandName() + " takes " + getNumOfArgs() + " argument at least\n");
+    }
+    return valid;
+  }
+
+  @Override
   public void run(CommandLine cl) throws IOException {
     String[] args = cl.getArgs();
-    AlluxioURI inputPath = new AlluxioURI(args[0]);
-    persist(inputPath);
+    for (String path : args) {
+      AlluxioURI inputPath = new AlluxioURI(path);
+      persist(inputPath);
+    }
   }
 
   /**
@@ -94,11 +105,12 @@ public final class PersistCommand extends AbstractShellCommand {
 
   @Override
   public String getUsage() {
-    return "persist <alluxioPath>";
+    return "persist <alluxioPath1> [alluxioPath2] ... [alluxioPathn]";
   }
 
   @Override
   public String getDescription() {
-    return "Persists a file or directory currently stored only in Alluxio to the UnderFileSystem.";
+    return "Persists files or directories currently stored only in Alluxio to the "
+        + "UnderFileSystem.";
   }
 }

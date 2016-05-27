@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -279,7 +279,7 @@ public final class StorageDirTest {
     mDir.addBlockMeta(blockMeta2);
 
     List<Long> actual = mDir.getBlockIds();
-    Assert.assertEquals(Sets.newHashSet(blockId1, blockId2), new HashSet<Long>(actual));
+    Assert.assertEquals(Sets.newHashSet(blockId1, blockId2), new HashSet<>(actual));
   }
 
   /**
@@ -298,7 +298,7 @@ public final class StorageDirTest {
     mDir.addBlockMeta(blockMeta2);
 
     List<BlockMeta> actual = mDir.getBlocks();
-    Assert.assertEquals(Sets.newHashSet(blockMeta1, blockMeta2), new HashSet<BlockMeta>(actual));
+    Assert.assertEquals(Sets.newHashSet(blockMeta1, blockMeta2), new HashSet<>(actual));
   }
 
   /**
@@ -560,12 +560,12 @@ public final class StorageDirTest {
 
     // Check the temporary blocks belonging to TEST_SESSION_ID
     List<TempBlockMeta> actual = mDir.getSessionTempBlocks(TEST_SESSION_ID);
-    List<Long> actualBlockIds = new ArrayList<Long>(actual.size());
+    List<Long> actualBlockIds = new ArrayList<>(actual.size());
     for (TempBlockMeta tempBlockMeta : actual) {
       actualBlockIds.add(tempBlockMeta.getBlockId());
     }
     Assert.assertEquals(Sets.newHashSet(tempBlockMeta1, tempBlockMeta2),
-        new HashSet<TempBlockMeta>(actual));
+        new HashSet<>(actual));
     Assert.assertTrue(mDir.hasTempBlockMeta(tempBlockId1));
     Assert.assertTrue(mDir.hasTempBlockMeta(tempBlockId2));
 

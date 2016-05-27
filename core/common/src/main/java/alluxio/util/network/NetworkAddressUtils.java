@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -140,7 +140,7 @@ public final class NetworkAddressUtils {
     /**
      * Gets the key of bind hostname.
      *
-     * @return key of bindhostname
+     * @return key of bind hostname
      */
     public String getBindHostKey() {
       return mBindHostKey;
@@ -451,7 +451,7 @@ public final class NetworkAddressUtils {
       return null;
     }
 
-    if (path.hasAuthority() && path.getPort() != -1) {
+    if (path.hasAuthority()) {
       String authority = resolveHostName(path.getHost());
       if (path.getPort() != -1) {
         authority += ":" + path.getPort();

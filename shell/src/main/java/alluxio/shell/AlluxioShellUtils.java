@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -17,6 +17,7 @@ import alluxio.Constants;
 import alluxio.client.file.FileSystem;
 import alluxio.client.file.URIStatus;
 import alluxio.exception.AlluxioException;
+import alluxio.cli.AlluxioShell;
 import alluxio.util.io.PathUtils;
 import alluxio.util.network.NetworkAddressUtils;
 import alluxio.util.network.NetworkAddressUtils.ServiceType;
@@ -35,7 +36,10 @@ import javax.annotation.concurrent.ThreadSafe;
  * Class for convenience methods used by {@link AlluxioShell}.
  */
 @ThreadSafe
-public class AlluxioShellUtils {
+public final class AlluxioShellUtils {
+
+  private AlluxioShellUtils() {} // prevent instantiation
+
   /**
    * Removes {@link Constants#HEADER} / {@link Constants#HEADER_FT} and hostname:port information
    * from a path, leaving only the local file path.

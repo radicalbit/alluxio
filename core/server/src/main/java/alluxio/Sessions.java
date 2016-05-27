@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -45,7 +45,7 @@ public class Sessions {
    * Creates a new instance of {@link Sessions}.
    */
   public Sessions() {
-    mSessions = new HashMap<Long, SessionInfo>();
+    mSessions = new HashMap<>();
   }
 
   /**
@@ -55,7 +55,7 @@ public class Sessions {
    */
   public List<Long> getTimedOutSessions() {
     LOG.debug("Worker is checking all sessions' status for timeouts.");
-    List<Long> ret = new ArrayList<Long>();
+    List<Long> ret = new ArrayList<>();
     synchronized (mSessions) {
       for (Entry<Long, SessionInfo> entry : mSessions.entrySet()) {
         if (entry.getValue().timeout()) {

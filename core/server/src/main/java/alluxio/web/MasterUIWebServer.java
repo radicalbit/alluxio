@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -20,7 +20,7 @@ import com.google.common.base.Preconditions;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 import java.net.InetSocketAddress;
-import java.util.Arrays;
+import java.util.Collections;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -41,7 +41,7 @@ public final class MasterUIWebServer extends UIWebServer {
   public MasterUIWebServer(ServiceType service, InetSocketAddress address, AlluxioMaster master,
       Configuration conf) {
     super(service, address, conf);
-    Preconditions.checkNotNull(master, "AlluxioMaster cannot be null");
+    Preconditions.checkNotNull(master, "Alluxio master cannot be null");
 
     mWebAppContext.addServlet(new ServletHolder(new WebInterfaceGeneralServlet(master)), "/home");
     mWebAppContext.addServlet(new ServletHolder(
@@ -63,7 +63,7 @@ public final class MasterUIWebServer extends UIWebServer {
     mWebAppContext.addServlet(new ServletHolder(new WebInterfaceMasterMetricsServlet(
         master.getMasterMetricsSystem())), "/metricsui");
     // REST configuration
-    mWebAppContext.setOverrideDescriptors(Arrays.asList(conf.get(Constants.WEB_RESOURCES)
-        + "/WEB-INF/master.xml"));
+    mWebAppContext.setOverrideDescriptors(
+        Collections.singletonList(conf.get(Constants.WEB_RESOURCES) + "/WEB-INF/master.xml"));
   }
 }

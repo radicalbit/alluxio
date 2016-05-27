@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -11,6 +11,7 @@
 
 package alluxio.client.file.policy;
 
+import alluxio.CommonTestUtils;
 import alluxio.Constants;
 import alluxio.client.ClientContext;
 import alluxio.client.block.BlockWorkerInfo;
@@ -59,5 +60,10 @@ public final class LocalFirstPolicyTest {
         .setRpcPort(PORT).setDataPort(PORT).setWebPort(PORT), Constants.MB, Constants.MB));
     Assert.assertEquals("worker1",
         policy.getWorkerForNextBlock(workerInfoList, Constants.GB).getHost());
+  }
+
+  @Test
+  public void equalsTest() throws Exception {
+    CommonTestUtils.testEquals(LocalFirstPolicy.class);
   }
 }

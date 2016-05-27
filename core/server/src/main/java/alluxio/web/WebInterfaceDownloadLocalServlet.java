@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -43,7 +43,7 @@ public final class WebInterfaceDownloadLocalServlet extends HttpServlet {
    * Creates a new instance of {@link WebInterfaceDownloadLocalServlet}.
    */
   public WebInterfaceDownloadLocalServlet() {
-    mConfiguration = new Configuration();
+    mConfiguration = Configuration.createServerConf();
   }
 
   /**
@@ -88,8 +88,8 @@ public final class WebInterfaceDownloadLocalServlet extends HttpServlet {
    * @param response the {@link HttpServletResponse} object
    * @throws IOException if an I/O error occurs
    */
-  private void downloadLogFile(File file, HttpServletRequest request,
-                               HttpServletResponse response) throws IOException {
+  private void downloadLogFile(File file, HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
     long len = file.length();
     String fileName = file.getName();
     response.setContentType("application/octet-stream");

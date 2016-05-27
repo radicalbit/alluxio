@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -278,6 +278,22 @@ public class PathUtilsTest {
         PathUtils.temporaryFileName(2, "/"));
     Assert.assertNotEquals(PathUtils.temporaryFileName(1, "/"),
         PathUtils.temporaryFileName(1, "/a"));
+  }
+
+  /**
+   * Test the {@link PathUtils#isTemporaryFileName(String)} method.
+   */
+  @Test
+  public void isTemporaryFileNameTest() {
+    Assert.assertTrue(PathUtils.isTemporaryFileName(PathUtils.temporaryFileName(0, "/")));
+    Assert.assertTrue(
+        PathUtils.isTemporaryFileName(PathUtils.temporaryFileName(0xFFFFFFFFFFFFFFFFL, "/")));
+    Assert.assertTrue(PathUtils.isTemporaryFileName("foo.alluxio.0x0123456789ABCDEF.tmp"));
+    Assert.assertFalse(PathUtils.isTemporaryFileName("foo.alluxio.0x      0123456789.tmp"));
+    Assert.assertFalse(PathUtils.isTemporaryFileName("foo.alluxio.0x0123456789ABCDEFG.tmp"));
+    Assert.assertFalse(PathUtils.isTemporaryFileName("foo.alluxio.0x0123456789ABCDE.tmp"));
+    Assert.assertFalse(PathUtils.isTemporaryFileName("foo.0x0123456789ABCDEFG.tmp"));
+    Assert.assertFalse(PathUtils.isTemporaryFileName("alluxio.0x0123456789ABCDEFG"));
   }
 
   /**

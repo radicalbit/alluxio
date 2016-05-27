@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -15,6 +15,7 @@ import alluxio.annotation.PublicApi;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.net.HostAndPort;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +45,14 @@ public final class FileBlockInfo {
   protected FileBlockInfo(alluxio.thrift.FileBlockInfo fileBlockInfo) {
     mBlockInfo = new BlockInfo(fileBlockInfo.getBlockInfo());
     mOffset = fileBlockInfo.getOffset();
-    mUfsLocations = fileBlockInfo.getUfsLocations();
+    if (fileBlockInfo.getUfsStringLocationsSize() != 0) {
+      mUfsLocations = fileBlockInfo.getUfsStringLocations();
+    } else if (fileBlockInfo.getUfsLocationsSize() != 0) {
+      for (alluxio.thrift.WorkerNetAddress address : fileBlockInfo.getUfsLocations()) {
+        mUfsLocations
+            .add(HostAndPort.fromParts(address.getHost(), address.getDataPort()).toString());
+      }
+    }
   }
 
   /**
@@ -101,7 +109,14 @@ public final class FileBlockInfo {
    * @return thrift representation of the file block descriptor
    */
   protected alluxio.thrift.FileBlockInfo toThrift() {
-    return new alluxio.thrift.FileBlockInfo(mBlockInfo.toThrift(), mOffset, mUfsLocations);
+    List<alluxio.thrift.WorkerNetAddress> ufsLocations = new ArrayList<>();
+    for (String ufsLocation : mUfsLocations) {
+      HostAndPort address = HostAndPort.fromString(ufsLocation);
+      ufsLocations.add(new alluxio.thrift.WorkerNetAddress().setHost(address.getHostText())
+          .setDataPort(address.getPortOrDefault(-1)));
+    }
+    return new alluxio.thrift.FileBlockInfo(mBlockInfo.toThrift(), mOffset, ufsLocations,
+        mUfsLocations);
   }
 
   @Override

@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -21,7 +21,7 @@ import com.google.common.base.Preconditions;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 import java.net.InetSocketAddress;
-import java.util.Arrays;
+import java.util.Collections;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -46,7 +46,7 @@ public final class WorkerUIWebServer extends UIWebServer {
       AlluxioWorker alluxioWorker, BlockWorker blockWorker, InetSocketAddress workerAddress,
       long startTimeMs, Configuration conf) {
     super(serviceType, webAddress, conf);
-    Preconditions.checkNotNull(blockWorker, "Block Worker cannot be null");
+    Preconditions.checkNotNull(blockWorker, "Block worker cannot be null");
     Preconditions.checkNotNull(workerAddress, "Worker address cannot be null");
 
     mWebAppContext.addServlet(new ServletHolder(new WebInterfaceWorkerGeneralServlet(
@@ -62,7 +62,7 @@ public final class WorkerUIWebServer extends UIWebServer {
         WebInterfaceWorkerMetricsServlet(alluxioWorker.getWorkerMetricsSystem())), "/metricsui");
 
     // REST configuration
-    mWebAppContext.setOverrideDescriptors(Arrays.asList(conf.get(Constants.WEB_RESOURCES)
-        + "/WEB-INF/worker.xml"));
+    mWebAppContext.setOverrideDescriptors(
+        Collections.singletonList(conf.get(Constants.WEB_RESOURCES) + "/WEB-INF/worker.xml"));
   }
 }

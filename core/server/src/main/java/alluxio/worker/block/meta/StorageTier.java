@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -70,7 +70,7 @@ public final class StorageTier {
         String.format(Constants.WORKER_TIERED_STORE_LEVEL_DIRS_QUOTA_FORMAT, mTierOrdinal);
     String[] dirQuotas = WorkerContext.getConf().get(tierDirCapacityConf).split(",");
 
-    mDirs = new ArrayList<StorageDir>(dirPaths.length);
+    mDirs = new ArrayList<>(dirPaths.length);
 
     long totalCapacity = 0;
     for (int i = 0; i < dirPaths.length; i++) {
@@ -84,7 +84,9 @@ public final class StorageTier {
       try {
         FileUtils.deletePathRecursively(tmpDirPath);
       } catch (IOException e) {
-        LOG.error("Failed to clean up temporary directory: {}.", tmpDirPath);
+        if (FileUtils.exists(tmpDirPath)) {
+          LOG.error("Failed to clean up temporary directory: {}.", tmpDirPath);
+        }
       }
     }
     mCapacityBytes = totalCapacity;

@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -30,6 +30,11 @@ public final class RoundRobinPolicy implements FileWriteLocationPolicy {
   private List<BlockWorkerInfo> mWorkerInfoList;
   private int mIndex;
   private boolean mInitialized = false;
+
+  /**
+   * Constructs a new {@link RoundRobinPolicy}.
+   */
+  public RoundRobinPolicy() {}
 
   /**
    * The policy uses the first fetch of worker info list as the base, and visits each of them in a

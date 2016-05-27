@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -106,7 +106,6 @@ public final class FileSystemUtils {
         ClientContext.getConf().getLong(Constants.USER_FILE_WAITCOMPLETED_POLL_MS);
     boolean completed = false;
     long timeleft = deadline - System.currentTimeMillis();
-    long toSleep = 0;
 
     while (!completed && (timeout <= 0 || timeleft > 0)) {
 
@@ -120,6 +119,8 @@ public final class FileSystemUtils {
       if (timeout == 0) {
         return completed;
       } else if (!completed) {
+        long toSleep;
+
         if (timeout < 0 || timeleft > pollPeriod) {
           toSleep = pollPeriod;
         } else {

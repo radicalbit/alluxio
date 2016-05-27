@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -43,15 +43,15 @@ public class AllocatorContractTest extends BaseAllocatorTest {
   @Override
   public void before() throws Exception {
     super.before();
-    mStrategies = new ArrayList<String>();
+    mStrategies = new ArrayList<>();
     try {
       String packageName = Reflection.getPackageName(Allocator.class);
       ClassPath path = ClassPath.from(Thread.currentThread().getContextClassLoader());
       List<ClassPath.ClassInfo> clazzInPackage =
-          new ArrayList<ClassPath.ClassInfo>(path.getTopLevelClassesRecursive(packageName));
+          new ArrayList<>(path.getTopLevelClassesRecursive(packageName));
       for (ClassPath.ClassInfo clazz : clazzInPackage) {
         Set<Class<?>> interfaces =
-            new HashSet<Class<?>>(Arrays.asList(clazz.load().getInterfaces()));
+            new HashSet<>(Arrays.asList(clazz.load().getInterfaces()));
         if (interfaces.size() > 0 && interfaces.contains(Allocator.class)) {
           mStrategies.add(clazz.getName());
         }

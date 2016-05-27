@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -197,7 +197,7 @@ public final class WebInterfaceBrowseServlet extends HttpServlet {
         return;
       }
       setPathDirectories(currentPath, request);
-      filesInfo = mMaster.getFileSystemMaster().getFileInfoList(currentPath);
+      filesInfo = mMaster.getFileSystemMaster().getFileInfoList(currentPath, true);
     } catch (FileDoesNotExistException e) {
       request.setAttribute("invalidPathError", "Error: Invalid Path " + e.getMessage());
       getServletContext().getRequestDispatcher("/browse.jsp").forward(request, response);
@@ -218,7 +218,7 @@ public final class WebInterfaceBrowseServlet extends HttpServlet {
       return;
     }
 
-    List<UIFileInfo> fileInfos = new ArrayList<UIFileInfo>(filesInfo.size());
+    List<UIFileInfo> fileInfos = new ArrayList<>(filesInfo.size());
     for (FileInfo fileInfo : filesInfo) {
       UIFileInfo toAdd = new UIFileInfo(fileInfo);
       try {

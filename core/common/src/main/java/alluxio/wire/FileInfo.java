@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -81,8 +81,10 @@ public final class FileInfo {
     mPersistenceState = fileInfo.getPersistenceState();
     mMountPoint = fileInfo.isMountPoint();
     mFileBlockInfos = new ArrayList<>();
-    for (alluxio.thrift.FileBlockInfo fileBlockInfo : fileInfo.getFileBlockInfos()) {
-      mFileBlockInfos.add(new FileBlockInfo(fileBlockInfo));
+    if (fileInfo.getFileBlockInfos() != null) {
+      for (alluxio.thrift.FileBlockInfo fileBlockInfo : fileInfo.getFileBlockInfos()) {
+        mFileBlockInfos.add(new FileBlockInfo(fileBlockInfo));
+      }
     }
   }
 
@@ -418,7 +420,7 @@ public final class FileInfo {
   }
 
   /**
-   * @param persistenceState the file persistance state to use
+   * @param persistenceState the file persistence state to use
    * @return the file descriptor
    */
   public FileInfo setPersistenceState(String persistenceState) {

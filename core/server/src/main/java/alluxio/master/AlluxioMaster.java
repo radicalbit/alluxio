@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -14,8 +14,7 @@ package alluxio.master;
 import alluxio.AlluxioURI;
 import alluxio.Configuration;
 import alluxio.Constants;
-import alluxio.ValidateConf;
-import alluxio.Version;
+import alluxio.RuntimeConstants;
 import alluxio.master.block.BlockMaster;
 import alluxio.master.file.FileSystemMaster;
 import alluxio.master.journal.ReadWriteJournal;
@@ -25,6 +24,7 @@ import alluxio.security.authentication.AuthType;
 import alluxio.security.authentication.TUGIAssumingProcessor;
 import alluxio.security.authentication.TransportProvider;
 import alluxio.underfs.UnderFileSystem;
+import alluxio.util.ConfigurationUtils;
 import alluxio.util.LineageUtils;
 import alluxio.util.network.NetworkAddressUtils;
 import alluxio.util.network.NetworkAddressUtils.ServiceType;
@@ -67,27 +67,34 @@ public class AlluxioMaster {
   private static AlluxioMaster sAlluxioMaster = null;
 
   /**
-   * Starts the Alluxio master server via {@code java -cp <ALLUXIO-VERSION> alluxio.Master}.
+   * Starts the Alluxio master.
    *
-   * @param args there are no arguments used
+   * @param args command line arguments, should be empty
    */
   public static void main(String[] args) {
     if (args.length != 0) {
-      LOG.info("java -cp {} alluxio.Master", Version.ALLUXIO_JAR);
+      LOG.info("java -cp {} {}", RuntimeConstants.ALLUXIO_JAR,
+          AlluxioMaster.class.getCanonicalName());
       System.exit(-1);
     }
 
     // validate the conf
-    if (!ValidateConf.validate()) {
+    if (!ConfigurationUtils.validateConf(Configuration.createServerConf())) {
       LOG.error("Invalid configuration found");
       System.exit(-1);
     }
 
+    AlluxioMaster master = get();
     try {
-      AlluxioMaster master = get();
       master.start();
     } catch (Exception e) {
-      LOG.error("Uncaught exception terminating Master", e);
+      LOG.error("Uncaught exception while running Alluxio master, stopping it and exiting.", e);
+      try {
+        master.stop();
+      } catch (Exception e2) {
+        // continue to exit
+        LOG.error("Uncaught exception while stopping Alluxio master, simply exiting.", e2);
+      }
       System.exit(-1);
     }
   }
@@ -236,9 +243,9 @@ public class AlluxioMaster {
       // deployment more complicated.
       if (!conf.getBoolean(Constants.IN_TEST_MODE)) {
         Preconditions.checkState(conf.getInt(Constants.MASTER_RPC_PORT) > 0,
-            "Master rpc port is only allowed to be zero in test mode.");
+            "Alluxio master rpc port is only allowed to be zero in test mode.");
         Preconditions.checkState(conf.getInt(Constants.MASTER_WEB_PORT) > 0,
-            "Master web port is only allowed to be zero in test mode.");
+            "Alluxio master web port is only allowed to be zero in test mode.");
       }
       mTransportProvider = TransportProvider.Factory.create(conf);
       mTServerSocket =
@@ -257,7 +264,7 @@ public class AlluxioMaster {
       connectToUFS();
 
       Preconditions.checkState(isJournalFormatted(journalDirectory),
-          "Alluxio was not formatted! The journal folder is " + journalDirectory);
+          "Alluxio master was not formatted! The journal folder is " + journalDirectory);
 
       // Create the journals.
       mBlockMasterJournal = new ReadWriteJournal(BlockMaster.getJournalDirectory(journalDirectory));
@@ -397,13 +404,13 @@ public class AlluxioMaster {
    */
   public void stop() throws Exception {
     if (mIsServing) {
-      LOG.info("Stopping RPC server on Alluxio Master @ {}", mMasterAddress);
+      LOG.info("Stopping RPC server on Alluxio master @ {}", mMasterAddress);
       stopServing();
       stopMasters();
       mTServerSocket.close();
       mIsServing = false;
     } else {
-      LOG.info("Stopping Alluxio Master @ {}", mMasterAddress);
+      LOG.info("Stopping Alluxio master @ {}", mMasterAddress);
     }
   }
 
@@ -451,10 +458,10 @@ public class AlluxioMaster {
   protected void startServing(String startMessage, String stopMessage) {
     mMasterMetricsSystem.start();
     startServingWebServer();
-    LOG.info("Alluxio Master version {} started @ {} {}", Version.VERSION, mMasterAddress,
+    LOG.info("Alluxio master version {} started @ {} {}", RuntimeConstants.VERSION, mMasterAddress,
         startMessage);
     startServingRPCServer();
-    LOG.info("Alluxio Master version {} ended @ {} {}", Version.VERSION, mMasterAddress,
+    LOG.info("Alluxio master version {} ended @ {} {}", RuntimeConstants.VERSION, mMasterAddress,
         stopMessage);
   }
 
@@ -534,7 +541,7 @@ public class AlluxioMaster {
   /**
    * Checks to see if the journal directory is formatted.
    *
-   * @param journalDirectory The journal directory to check
+   * @param journalDirectory the journal directory to check
    * @return true if the journal directory was formatted previously, false otherwise
    * @throws IOException if an I/O error occurs
    */

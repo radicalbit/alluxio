@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -65,9 +65,9 @@ public final class RemoteBlockOutStream extends BufferedBlockOutStream {
       mBlockWorkerClient.cancelBlock(mBlockId);
     } catch (AlluxioException e) {
       throw new IOException(e);
+    } finally {
+      releaseAndClose();
     }
-    mContext.releaseWorkerClient(mBlockWorkerClient);
-    mClosed = true;
   }
 
   @Override
@@ -82,6 +82,8 @@ public final class RemoteBlockOutStream extends BufferedBlockOutStream {
         mBlockWorkerClient.cacheBlock(mBlockId);
       } catch (AlluxioException e) {
         throw new IOException(e);
+      } finally {
+        releaseAndClose();
       }
       mMetrics.incBlocksWrittenRemote(1);
     } else {
@@ -89,10 +91,10 @@ public final class RemoteBlockOutStream extends BufferedBlockOutStream {
         mBlockWorkerClient.cancelBlock(mBlockId);
       } catch (AlluxioException e) {
         throw new IOException(e);
+      } finally {
+        releaseAndClose();
       }
     }
-    mContext.releaseWorkerClient(mBlockWorkerClient);
-    mClosed = true;
   }
 
   @Override
@@ -110,5 +112,13 @@ public final class RemoteBlockOutStream extends BufferedBlockOutStream {
     mRemoteWriter.write(b, off, len);
     mFlushedBytes += len;
     mMetrics.incBytesWrittenRemote(len);
+  }
+
+  /**
+   * Releases {@link #mBlockWorkerClient} and sets {@link #mClosed} to true.
+   */
+  private void releaseAndClose() {
+    mContext.releaseWorkerClient(mBlockWorkerClient);
+    mClosed = true;
   }
 }

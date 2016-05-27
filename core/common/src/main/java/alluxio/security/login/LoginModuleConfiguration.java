@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -38,7 +38,7 @@ import javax.security.auth.login.Configuration;
 @ThreadSafe
 public final class LoginModuleConfiguration extends Configuration {
 
-  private static final Map<String, String> EMPTY_JAAS_OPTIONS = new HashMap<String, String>();
+  private static final Map<String, String> EMPTY_JAAS_OPTIONS = new HashMap<>();
 
   /** Login module that allows a user name provided by OS. */
   private static final AppConfigurationEntry OS_SPECIFIC_LOGIN =
@@ -69,6 +69,11 @@ public final class LoginModuleConfiguration extends Configuration {
 
   private static final AppConfigurationEntry[] KERBEROS =
           new AppConfigurationEntry[]{KERBEROS_LOGIN};
+
+  /**
+   * Constructs a new {@link LoginModuleConfiguration}.
+   */
+  public LoginModuleConfiguration() {}
 
   @Override
   public AppConfigurationEntry[] getAppConfigurationEntry(String appName) {

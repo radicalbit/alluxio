@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -102,7 +102,7 @@ import javax.annotation.concurrent.ThreadSafe;
 public class IndexedSet<T> extends AbstractSet<T> {
   /** All objects in the set. This set is required to guarantee uniqueness of objects. */
   // TODO(gpang): remove this set, and just use the indexes.
-  private final ConcurrentHashSet<T> mObjects = new ConcurrentHashSet<>();
+  private final ConcurrentHashSet<T> mObjects = new ConcurrentHashSet<>(8, 0.95f, 8);
   /**
    * Map from {@link FieldIndex} to the index. An index is a map from index value to set of
    * objects with that index value.
@@ -137,9 +137,9 @@ public class IndexedSet<T> extends AbstractSet<T> {
   public IndexedSet(FieldIndex<T> field, FieldIndex<T>... otherFields) {
     Map<FieldIndex<T>, ConcurrentHashMap<Object, ConcurrentHashSet<T>>> indexMap =
         new HashMap<>(otherFields.length + 1);
-    indexMap.put(field, new ConcurrentHashMap<Object, ConcurrentHashSet<T>>());
+    indexMap.put(field, new ConcurrentHashMap<Object, ConcurrentHashSet<T>>(8, 0.95f, 8));
     for (FieldIndex<T> fieldIndex : otherFields) {
-      indexMap.put(fieldIndex, new ConcurrentHashMap<Object, ConcurrentHashSet<T>>());
+      indexMap.put(fieldIndex, new ConcurrentHashMap<Object, ConcurrentHashSet<T>>(8, 0.95f, 8));
     }
     // read only, so it is thread safe and allows concurrent access.
     mIndexMap = Collections.unmodifiableMap(indexMap);

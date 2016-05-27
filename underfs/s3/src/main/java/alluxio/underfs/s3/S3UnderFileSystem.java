@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -111,6 +111,10 @@ public class S3UnderFileSystem extends UnderFileSystem {
     if (conf.containsKey(Constants.UNDERFS_S3_DISABLE_DNS_BUCKETS)) {
       props.setProperty("s3service.disable-dns-buckets",
           conf.get(Constants.UNDERFS_S3_DISABLE_DNS_BUCKETS));
+    }
+    if (conf.containsKey(Constants.UNDERFS_S3_SERVER_SIDE_ENCRYPTION)) {
+      props.setProperty("s3service.server-side-encryption",
+          conf.get(Constants.UNDERFS_S3_SERVER_SIDE_ENCRYPTION));
     }
     LOG.debug("Initializing S3 underFs with properties: {}", props.getProperties());
     mClient = new RestS3Service(awsCredentials, null, null, props);
@@ -345,6 +349,10 @@ public class S3UnderFileSystem extends UnderFileSystem {
 
   // Not supported
   @Override
+  public void setOwner(String path, String user, String group) {}
+
+  // Not supported
+  @Override
   public void setPermission(String path, String posixPerm) throws IOException {}
 
   /**
@@ -370,17 +378,25 @@ public class S3UnderFileSystem extends UnderFileSystem {
    * @return true if the operation was successful, false otherwise
    */
   private boolean copy(String src, String dst) {
-    try {
-      src = stripPrefixIfPresent(src);
-      dst = stripPrefixIfPresent(dst);
-      LOG.info("Copying {} to {}", src, dst);
-      S3Object obj = new S3Object(dst);
-      mClient.copyObject(mBucketName, src, mBucketName, obj, false);
-      return true;
-    } catch (ServiceException e) {
-      LOG.error("Failed to rename file {} to {}", src, dst, e);
-      return false;
+    src = stripPrefixIfPresent(src);
+    dst = stripPrefixIfPresent(dst);
+    LOG.debug("Copying {} to {}", src, dst);
+    S3Object obj = new S3Object(dst);
+    // Retry copy for a few times, in case some Jets3t or AWS internal errors happened during copy.
+    int retries = 3;
+    for (int i = 0; i < retries; i++) {
+      try {
+        mClient.copyObject(mBucketName, src, mBucketName, obj, false);
+        return true;
+      } catch (ServiceException e) {
+        LOG.error("Failed to copy file {} to {}", src, dst, e);
+        if (i != retries - 1) {
+          LOG.error("Retrying copying file {} to {}", src, dst);
+        }
+      }
     }
+    LOG.error("Failed to copy file {} to {}, after {} retries", src, dst, retries);
+    return false;
   }
 
   /**

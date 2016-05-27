@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -13,6 +13,7 @@ package alluxio.client.file;
 
 import alluxio.AlluxioURI;
 import alluxio.Constants;
+import alluxio.client.ClientContext;
 import alluxio.client.UnderStorageType;
 import alluxio.client.WriteType;
 import alluxio.client.block.AlluxioBlockStore;
@@ -21,7 +22,9 @@ import alluxio.client.block.BlockWorkerClient;
 import alluxio.client.block.BlockWorkerInfo;
 import alluxio.client.block.BufferedBlockOutStream;
 import alluxio.client.block.TestBufferedBlockOutStream;
+import alluxio.client.file.options.CancelUfsFileOptions;
 import alluxio.client.file.options.CompleteFileOptions;
+import alluxio.client.file.options.CreateUfsFileOptions;
 import alluxio.client.file.options.OutStreamOptions;
 import alluxio.client.file.policy.FileWriteLocationPolicy;
 import alluxio.client.file.policy.LocalFirstPolicy;
@@ -65,11 +68,13 @@ public class FileOutStreamTest {
 
   private static final long BLOCK_LENGTH = 100L;
   private static final AlluxioURI FILE_NAME = new AlluxioURI("/file");
+  /** Used if ufs operation delegation is enabled. */
+  private static final long UFS_FILE_ID = 1L;
 
-  private AlluxioBlockStore mBlockStore;
   private BlockStoreContext mBlockStoreContext;
   private FileSystemContext mFileSystemContext;
   private FileSystemMasterClient mFileSystemMasterClient;
+  private FileSystemWorkerClient mWorkerClient;
   private UnderFileSystem mUnderFileSystem;
 
   private Map<Long, TestBufferedBlockOutStream> mAlluxioOutStreamMap;
@@ -77,6 +82,7 @@ public class FileOutStreamTest {
   private AtomicBoolean mUnderStorageFlushed;
 
   private FileOutStream mTestStream;
+  private boolean mDelegateUfsOps;
 
   /**
    * Sets up the different contexts and clients before a test runs.
@@ -86,10 +92,11 @@ public class FileOutStreamTest {
   @Before
   public void before() throws Exception {
     ClientTestUtils.setSmallBufferSizes();
+    mDelegateUfsOps = ClientContext.getConf().getBoolean(Constants.USER_UFS_DELEGATION_ENABLED);
 
     // PowerMock enums and final classes
     mFileSystemContext = PowerMockito.mock(FileSystemContext.class);
-    mBlockStore = PowerMockito.mock(AlluxioBlockStore.class);
+    AlluxioBlockStore mBlockStore = PowerMockito.mock(AlluxioBlockStore.class);
     mBlockStoreContext = PowerMockito.mock(BlockStoreContext.class);
     mFileSystemMasterClient = PowerMockito.mock(FileSystemMasterClient.class);
 
@@ -97,6 +104,13 @@ public class FileOutStreamTest {
     Mockito.when(mFileSystemContext.acquireMasterClient()).thenReturn(mFileSystemMasterClient);
     Mockito.when(mFileSystemMasterClient.getStatus(Mockito.any(AlluxioURI.class))).thenReturn(
         new URIStatus(new FileInfo()));
+
+    // Worker file client mocking
+    mWorkerClient = PowerMockito.mock(FileSystemWorkerClient.class);
+    Mockito.when(mFileSystemContext.createWorkerClient()).thenReturn(mWorkerClient);
+    Mockito.when(
+        mWorkerClient.createUfsFile(Mockito.any(AlluxioURI.class),
+            Mockito.any(CreateUfsFileOptions.class))).thenReturn(UFS_FILE_ID);
 
     // Return sequentially increasing numbers for new block ids
     Mockito.when(mFileSystemMasterClient.getNewBlockIdForFile(FILE_NAME))
@@ -246,7 +260,11 @@ public class FileOutStreamTest {
     Mockito.verify(mFileSystemMasterClient, Mockito.times(0)).completeFile(FILE_NAME,
         CompleteFileOptions.defaults());
 
-    Mockito.verify(mUnderFileSystem).delete(Mockito.anyString(), Mockito.eq(false));
+    if (mDelegateUfsOps) {
+      Mockito.verify(mWorkerClient).cancelUfsFile(UFS_FILE_ID, CancelUfsFileOptions.defaults());
+    } else {
+      Mockito.verify(mUnderFileSystem).delete(Mockito.anyString(), Mockito.eq(false));
+    }
   }
 
   /**
@@ -331,7 +349,7 @@ public class FileOutStreamTest {
       mTestStream.write(new byte[10], 5, 6);
       Assert.fail("buffer write with invalid offset/length should fail");
     } catch (IllegalArgumentException e) {
-      Assert.assertEquals(String.format(PreconditionMessage.ERR_BUFFER_STATE, 10, 5, 6),
+      Assert.assertEquals(String.format(PreconditionMessage.ERR_BUFFER_STATE.toString(), 10, 5, 6),
           e.getMessage());
     }
   }
@@ -347,7 +365,7 @@ public class FileOutStreamTest {
       mTestStream.write(null);
       Assert.fail("writing null should fail");
     } catch (IllegalArgumentException e) {
-      Assert.assertEquals(PreconditionMessage.ERR_WRITE_BUFFER_NULL, e.getMessage());
+      Assert.assertEquals(PreconditionMessage.ERR_WRITE_BUFFER_NULL.toString(), e.getMessage());
     }
   }
 
@@ -362,7 +380,7 @@ public class FileOutStreamTest {
       mTestStream.write(null, 0, 0);
       Assert.fail("writing null should fail");
     } catch (IllegalArgumentException e) {
-      Assert.assertEquals(PreconditionMessage.ERR_WRITE_BUFFER_NULL, e.getMessage());
+      Assert.assertEquals(PreconditionMessage.ERR_WRITE_BUFFER_NULL.toString(), e.getMessage());
     }
   }
 
@@ -424,7 +442,7 @@ public class FileOutStreamTest {
       mTestStream = createTestStream(FILE_NAME, options);
       Assert.fail("missing location policy should fail");
     } catch (NullPointerException e) {
-      Assert.assertEquals(PreconditionMessage.FILE_WRITE_LOCATION_POLICY_UNSPECIFIED,
+      Assert.assertEquals(PreconditionMessage.FILE_WRITE_LOCATION_POLICY_UNSPECIFIED.toString(),
           e.getMessage());
     }
   }
@@ -480,6 +498,10 @@ public class FileOutStreamTest {
     Whitebox.setInternalState(BlockStoreContext.class, "INSTANCE", mBlockStoreContext);
     Whitebox.setInternalState(FileSystemContext.class, "INSTANCE", mFileSystemContext);
     FileOutStream stream = new FileOutStream(path, options);
+    // Set up under file storage for delegated ufs operations if enabled
+    if (mDelegateUfsOps) {
+      Whitebox.setInternalState(stream, "mUnderStorageOutputStream", mUnderStorageOutputStream);
+    }
     return stream;
   }
 }

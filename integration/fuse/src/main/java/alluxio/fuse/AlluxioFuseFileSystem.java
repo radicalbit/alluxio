@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -166,7 +166,7 @@ final class AlluxioFuseFileSystem extends FuseStubFS {
   public int flush(String path, FuseFileInfo fi) {
     LOG.trace("flush({})", path);
     final long fd = fi.fh.get();
-    OpenFileEntry oe = null;
+    OpenFileEntry oe;
     synchronized (mOpenFiles) {
       oe = mOpenFiles.get(fd);
     }
@@ -380,7 +380,7 @@ final class AlluxioFuseFileSystem extends FuseStubFS {
     LOG.trace("read({}, {}, {})", path, size, offset);
     final int sz = (int) size;
     final long fd = fi.fh.get();
-    OpenFileEntry oe = null;
+    OpenFileEntry oe;
     synchronized (mOpenFiles) {
       oe = mOpenFiles.get(fd);
     }
@@ -488,7 +488,7 @@ final class AlluxioFuseFileSystem extends FuseStubFS {
   public int release(String path, FuseFileInfo fi) {
     LOG.trace("release({})", path);
     final long fd = fi.fh.get();
-    OpenFileEntry oe = null;
+    OpenFileEntry oe;
     synchronized (mOpenFiles) {
       oe = mOpenFiles.remove(fd);
       if (oe == null) {
@@ -588,7 +588,7 @@ final class AlluxioFuseFileSystem extends FuseStubFS {
     LOG.trace("write({}, {}, {})", path, size, offset);
     final int sz = (int) size;
     final long fd = fi.fh.get();
-    OpenFileEntry oe = null;
+    OpenFileEntry oe;
     synchronized (mOpenFiles) {
       oe = mOpenFiles.get(fd);
     }
@@ -665,6 +665,12 @@ final class AlluxioFuseFileSystem extends FuseStubFS {
    * Resolves a FUSE path into {@link AlluxioURI} and possibly keeps it in the cache.
    */
   private class PathCacheLoader extends CacheLoader<String, AlluxioURI> {
+
+    /**
+     * Constructs a new {@link PathCacheLoader}.
+     */
+    public PathCacheLoader() {}
+
     @Override
     public AlluxioURI load(String fusePath) {
       // fusePath is guaranteed to always be an absolute path (i.e., starts

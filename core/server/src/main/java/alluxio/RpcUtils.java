@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -39,10 +39,10 @@ public final class RpcUtils {
     try {
       return callable.call();
     } catch (AlluxioException e) {
-      throw e.toAlluxioTException();
+      throw e.toThrift();
     } catch (RuntimeException e) {
       LOG.error("Unexpected error running rpc", e);
-      throw new UnexpectedAlluxioException(e).toAlluxioTException();
+      throw new UnexpectedAlluxioException(e).toThrift();
     }
   }
 
@@ -60,12 +60,12 @@ public final class RpcUtils {
     try {
       return callable.call();
     } catch (AlluxioException e) {
-      throw e.toAlluxioTException();
+      throw e.toThrift();
     } catch (IOException e) {
       throw new ThriftIOException(e.getMessage());
     } catch (RuntimeException e) {
       LOG.error("Unexpected error running rpc", e);
-      throw new UnexpectedAlluxioException(e).toAlluxioTException();
+      throw new UnexpectedAlluxioException(e).toThrift();
     }
   }
 

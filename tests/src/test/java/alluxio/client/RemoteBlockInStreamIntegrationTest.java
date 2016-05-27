@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -351,7 +351,7 @@ public class RemoteBlockInStreamIntegrationTest {
   @Test
   public void seekExceptionTest1() throws IOException, AlluxioException {
     mThrown.expect(IllegalArgumentException.class);
-    mThrown.expectMessage(String.format(PreconditionMessage.ERR_SEEK_NEGATIVE, -1));
+    mThrown.expectMessage(String.format(PreconditionMessage.ERR_SEEK_NEGATIVE.toString(), -1));
     String uniqPath = PathUtils.uniqPath();
     for (int k = MIN_LEN; k <= MAX_LEN; k += DELTA) {
       AlluxioURI uri = new AlluxioURI(uniqPath + "/file_" + k);
@@ -376,7 +376,8 @@ public class RemoteBlockInStreamIntegrationTest {
   @Test
   public void seekExceptionTest2() throws IOException, AlluxioException {
     mThrown.expect(IllegalArgumentException.class);
-    mThrown.expectMessage(String.format(PreconditionMessage.ERR_SEEK_PAST_END_OF_FILE, 1));
+    mThrown
+        .expectMessage(String.format(PreconditionMessage.ERR_SEEK_PAST_END_OF_FILE.toString(), 1));
     String uniqPath = PathUtils.uniqPath();
     for (int k = MIN_LEN; k <= MAX_LEN; k += DELTA) {
       AlluxioURI uri = new AlluxioURI(uniqPath + "/file_" + k);
@@ -431,7 +432,7 @@ public class RemoteBlockInStreamIntegrationTest {
       Assert.assertEquals(k / 2, is.skip(k / 2));
       Assert.assertEquals(k / 2, is.read());
       is.close();
-      Assert.assertFalse(mFileSystem.getStatus(uri).getInMemoryPercentage() == 100);
+      Assert.assertTrue(mFileSystem.getStatus(uri).getInMemoryPercentage() == 100);
 
       if (k >= 3) {
         is = mFileSystem.openFile(uri, mReadCache);
@@ -441,7 +442,7 @@ public class RemoteBlockInStreamIntegrationTest {
         Assert.assertEquals(t, is.skip(t));
         Assert.assertEquals(2 * t + 1, is.read());
         is.close();
-        Assert.assertFalse(mFileSystem.getStatus(uri).getInMemoryPercentage() == 100);
+        Assert.assertTrue(mFileSystem.getStatus(uri).getInMemoryPercentage() == 100);
       }
     }
   }

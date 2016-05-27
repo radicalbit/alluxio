@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -37,14 +37,8 @@ public interface GroupMappingService {
   class Factory {
     private static final Logger LOG = LoggerFactory.getLogger(Constants.LOGGER_TYPE);
 
-    /**
-     * Gets the groups being used to map user-to-groups.
-     *
-     * @return the groups being used to map user-to-groups
-     */
-    public static GroupMappingService getUserToGroupsMappingService() {
-      return getUserToGroupsMappingService(new Configuration());
-    }
+    // prevent instantiation
+    private Factory() {}
 
     /**
      * Gets the groups being used to map user-to-groups.

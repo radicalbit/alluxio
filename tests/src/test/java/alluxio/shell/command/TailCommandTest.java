@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -72,5 +72,13 @@ public class TailCommandTest extends AbstractAlluxioShellTest {
     int ret = mFsShell.run("tail", "/testWildCards/*/foo*");
     Assert.assertEquals(0, ret);
     Assert.assertArrayEquals(mOutput.toByteArray(), expect);
+  }
+
+  @Test
+  public void tailFileWithUserSpecifiedBytes() throws IOException {
+    FileSystemTestUtils.createByteFile(mFileSystem, "/testFile", WriteType.MUST_CACHE, 2048);
+    mFsShell.run("tail", "-c", "2000", "/testFile");
+    byte[] expect = BufferUtils.getIncreasingByteArray(48, 2000);
+    Assert.assertArrayEquals(expect, mOutput.toByteArray());
   }
 }

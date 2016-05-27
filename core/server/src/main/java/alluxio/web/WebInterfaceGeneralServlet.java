@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -13,8 +13,8 @@ package alluxio.web;
 
 import alluxio.Configuration;
 import alluxio.Constants;
+import alluxio.RuntimeConstants;
 import alluxio.StorageTierAssoc;
-import alluxio.Version;
 import alluxio.master.AlluxioMaster;
 import alluxio.master.MasterContext;
 import alluxio.underfs.UnderFileSystem;
@@ -177,7 +177,7 @@ public final class WebInterfaceGeneralServlet extends HttpServlet {
 
     request.setAttribute("startTime", WebUtils.convertMsToDate(mMaster.getStartTimeMs()));
 
-    request.setAttribute("version", Version.VERSION);
+    request.setAttribute("version", RuntimeConstants.VERSION);
 
     request.setAttribute("liveWorkerNodes",
         Integer.toString(mMaster.getBlockMaster().getWorkerCount()));
@@ -193,8 +193,7 @@ public final class WebInterfaceGeneralServlet extends HttpServlet {
             FormatUtils.getSizeFromBytes(mMaster.getBlockMaster().getCapacityBytes()
                 - mMaster.getBlockMaster().getUsedBytes()));
 
-    // TODO(jiri): Should we use MasterContext here instead?
-    Configuration conf = new Configuration();
+    Configuration conf = Configuration.createServerConf();
     String ufsRoot = conf.get(Constants.UNDERFS_ADDRESS);
     UnderFileSystem ufs = UnderFileSystem.get(ufsRoot, conf);
 

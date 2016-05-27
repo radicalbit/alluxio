@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -51,6 +51,9 @@ public interface FileSystem {
    * Factory for {@link FileSystem}.
    */
   class Factory {
+
+    private Factory() {} // prevent instantiation
+
     public static FileSystem get() {
       if (ClientContext.getConf().getBoolean(Constants.USER_LINEAGE_ENABLED)) {
         return LineageFileSystem.get();
@@ -245,7 +248,9 @@ public interface FileSystem {
    * @throws IOException if a non-Alluxio exception occurs
    * @throws FileDoesNotExistException if the given path does not exist
    * @throws AlluxioException if an unexpected Alluxio exception is thrown
+   * @deprecated since version 1.1 and will be removed in version 2.0
    */
+  @Deprecated
   void loadMetadata(AlluxioURI path)
       throws FileDoesNotExistException, IOException, AlluxioException;
 
@@ -257,7 +262,9 @@ public interface FileSystem {
    * @throws IOException if a non-Alluxio exception occurs
    * @throws FileDoesNotExistException if the given path does not exist
    * @throws AlluxioException if an unexpected Alluxio exception is thrown
+   * @deprecated since version 1.1 and will be removed in version 2.0
    */
+  @Deprecated
   void loadMetadata(AlluxioURI path, LoadMetadataOptions options)
       throws FileDoesNotExistException, IOException, AlluxioException;
 

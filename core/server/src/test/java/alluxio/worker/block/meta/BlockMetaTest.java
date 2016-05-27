@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -35,7 +35,6 @@ public class BlockMetaTest {
   private static final int TEST_TIER_ORDINAL = 0;
   private static final String TEST_TIER_ALIAS = "MEM";
   private static final long[] TEST_TIER_CAPACITY_BYTES = {100};
-  private StorageDir mDir;
   private BlockMeta mBlockMeta;
   private TempBlockMeta mTempBlockMeta;
   private String mTestDirPath;
@@ -57,8 +56,8 @@ public class BlockMetaTest {
         TEST_TIER_ALIAS, new String[] {mTestDirPath}, TEST_TIER_CAPACITY_BYTES, "");
 
     StorageTier tier = StorageTier.newStorageTier(TEST_TIER_ALIAS);
-    mDir = tier.getDir(0);
-    mTempBlockMeta = new TempBlockMeta(TEST_SESSION_ID, TEST_BLOCK_ID, TEST_BLOCK_SIZE, mDir);
+    StorageDir dir = tier.getDir(0);
+    mTempBlockMeta = new TempBlockMeta(TEST_SESSION_ID, TEST_BLOCK_ID, TEST_BLOCK_SIZE, dir);
   }
 
   /**

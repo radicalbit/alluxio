@@ -1,6 +1,6 @@
 /*
  * The Alluxio Open Foundation licenses this work under the Apache License, version 2.0
- * (the “License”). You may not use this work except in compliance with the License, which is
+ * (the "License"). You may not use this work except in compliance with the License, which is
  * available at www.apache.org/licenses/LICENSE-2.0
  *
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
@@ -61,8 +61,8 @@ public final class BlockMetadataManager {
   private BlockMetadataManager() {
     try {
       StorageTierAssoc storageTierAssoc = new WorkerStorageTierAssoc(WorkerContext.getConf());
-      mAliasToTiers = new HashMap<String, StorageTier>(storageTierAssoc.size());
-      mTiers = new ArrayList<StorageTier>(storageTierAssoc.size());
+      mAliasToTiers = new HashMap<>(storageTierAssoc.size());
+      mTiers = new ArrayList<>(storageTierAssoc.size());
       for (int tierOrdinal = 0; tierOrdinal < storageTierAssoc.size(); tierOrdinal++) {
         StorageTier tier = StorageTier.newStorageTier(storageTierAssoc.getAlias(tierOrdinal));
         mTiers.add(tier);
@@ -309,7 +309,7 @@ public final class BlockMetadataManager {
    * @return A list of temp blocks associated with the session
    */
   public List<TempBlockMeta> getSessionTempBlocks(long sessionId) {
-    List<TempBlockMeta> sessionTempBlocks = new ArrayList<TempBlockMeta>();
+    List<TempBlockMeta> sessionTempBlocks = new ArrayList<>();
     for (StorageTier tier : mTiers) {
       for (StorageDir dir : tier.getStorageDirs()) {
         sessionTempBlocks.addAll(dir.getSessionTempBlocks(sessionId));
