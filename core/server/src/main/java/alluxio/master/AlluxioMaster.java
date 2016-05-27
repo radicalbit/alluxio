@@ -497,7 +497,7 @@ public class AlluxioMaster {
 
     TProcessor processor = MasterContext.getConf()
         .getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class).equals(AuthType.KERBEROS)
-            ? new TUGIAssumingProcessor(multiplexedProcessor) : multiplexedProcessor; 
+            ? new TUGIAssumingProcessor(multiplexedProcessor) : multiplexedProcessor;
 
     // Return a TTransportFactory based on the authentication type
     TTransportFactory transportFactory;

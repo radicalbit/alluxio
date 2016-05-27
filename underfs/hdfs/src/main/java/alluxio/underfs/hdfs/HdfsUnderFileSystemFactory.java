@@ -17,7 +17,6 @@ import alluxio.underfs.UnderFileSystem;
 import alluxio.underfs.UnderFileSystemFactory;
 
 import com.google.common.base.Preconditions;
-import org.apache.hadoop.fs.FileSystem;
 
 import javax.annotation.concurrent.ThreadSafe;
 

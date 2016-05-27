@@ -426,7 +426,7 @@ public final class AlluxioWorker {
     }
 
     TProcessor processor = WorkerContext.getConf()
-            .getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class).equals(AuthType.KERBEROS)
+        .getEnum(Constants.SECURITY_AUTHENTICATION_TYPE, AuthType.class).equals(AuthType.KERBEROS)
             ? new TUGIAssumingProcessor(multiplexedProcessor) : multiplexedProcessor;
 
     // Return a TTransportFactory based on the authentication type
