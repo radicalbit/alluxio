@@ -42,6 +42,9 @@ public final class PathUtils {
    */
   public static String cleanPath(String path) throws InvalidPathException {
     validatePath(path);
+    if (!path.startsWith(AlluxioURI.SEPARATOR)) {
+      path = AlluxioURI.SEPARATOR + path;
+    }
     return FilenameUtils.separatorsToUnix(FilenameUtils.normalizeNoEndSeparator(path));
   }
 
@@ -196,9 +199,9 @@ public final class PathUtils {
    */
   public static void validatePath(String path) throws InvalidPathException {
     boolean invalid = (path == null || path.isEmpty() || path.contains(" "));
-    if (!OSUtils.isWindows()) {
-      invalid = (invalid || !path.startsWith(AlluxioURI.SEPARATOR));
-    }
+//    if (!OSUtils.isWindows()) {
+//      invalid = (invalid || !path.startsWith(AlluxioURI.SEPARATOR));
+//    }
 
     if (invalid) {
       throw new InvalidPathException(ExceptionMessage.PATH_INVALID.getMessage(path));
